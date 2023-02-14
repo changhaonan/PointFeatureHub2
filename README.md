@@ -25,3 +25,7 @@ Currently included:
 The current architecture we used is based ZMQ socket. The reason why we should this is because this can help us to integrate different conda environment, python and c++. Make the whole structure easy to use. 
 
 We also provide python and C++ wrapper to integrate with your own projects.
+
+## TODO:
+
+- [ ] Add a resize wrapper for Detector and Matcher.

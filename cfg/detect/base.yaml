@@ -1,5 +1,5 @@
 # @package _global_
-detector: empty # this is only a place-holder
+detector: base # this is only a place-holder
 
 detector_device: cpu
 dim_feature: 32

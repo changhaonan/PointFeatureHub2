@@ -3,16 +3,18 @@ import numpy as np
 
 
 class BaseDetector(Detector):
-    def __init__(self, cfg):
+    def __init__(self, cfg, device):
         self.cfg = cfg
+        self.device = device
 
     def detect(self, image):
         return np.array([]), np.array([]), np.array([]), np.array([])
 
 
 class BaseMatcher(Matcher):
-    def __init__(self, cfg):
+    def __init__(self, cfg, device):
         self.cfg = cfg
+        self.device = device
 
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         return np.array([]), np.array([]), np.array([]), np.array([])

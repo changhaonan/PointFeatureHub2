@@ -75,7 +75,7 @@ def launch_detector_hydra(cfg):
                     cfg.matcher, loader_map.keys()
                 )
             )
-        loader = loader_map[cfg.matcher](cfg, **kwargs)
+        loader = loader_map[cfg.loader](cfg, **kwargs)
         if cfg.load_from_network:
             loader = NetworkMatcherWrapper(loader, cfg.loader_port)
         else:
@@ -98,7 +98,7 @@ def launch_detector_hydra(cfg):
     elif cfg.task == "match":
         matcher = create_matcher_thunk()
         detector = create_detector_thunk()
-
+        
         for image1_file in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
             # get image name
             image_name = os.path.basename(image1_file)

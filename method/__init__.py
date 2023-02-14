@@ -8,7 +8,7 @@ from .super_glue import SuperGlueMatcher
 from .loftr import LoFTRMatcher
 from .adalam import AdalamMatcher
 
-from .base import BaseDetector, BaseDetector, BaseDetector
+from .base import BaseDetector, BaseDetector, BaseLoder
 
 detector_map = {
     "base": BaseDetector,
@@ -27,5 +27,5 @@ matcher_map = {
 }
 
 loader_map = {
-    "base": BaseDetector,
+    "base": BaseLoder,
 }
