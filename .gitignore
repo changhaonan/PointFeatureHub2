@@ -1,5 +1,4 @@
 *.pyc
 *.egg-info
 .hydra
-.vscode
 data
