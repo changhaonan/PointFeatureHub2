@@ -8,7 +8,10 @@ from .super_glue import SuperGlueMatcher
 from .loftr import LoFTRMatcher
 from .adalam import AdalamMatcher
 
+from .base import BaseDetector, BaseDetector, BaseDetector
+
 detector_map = {
+    "base": BaseDetector,
     "sift": SIFTDetector,
     "super_point": SuperPointDetector,
     "r2d2": R2D2Detector,
@@ -16,8 +19,13 @@ detector_map = {
 }
 
 matcher_map = {
+    "base": BaseDetector,
     "bf": BFMatcher,
     "super_glue": SuperGlueMatcher,
     "loftr": LoFTRMatcher,
     "adalam": AdalamMatcher,
+}
+
+loader_map = {
+    "base": BaseDetector,
 }

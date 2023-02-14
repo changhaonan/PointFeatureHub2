@@ -1,10 +1,13 @@
 import cv2
 import os
-from core.core import Detector, DetectorWrapper, Matcher, MatcherWrapper
+from core.core import DetectorWrapper, MatcherWrapper, LoaderWrapper
+
 import numpy as np
 import matplotlib.cm as cm
 from third_party.utils import make_matching_plot_fast
 import zmq
+from pillow_heif import register_heif_opener
+from PIL import Image
 
 
 class SaveImageDetectorWrapper(DetectorWrapper):
@@ -241,6 +244,7 @@ class NetworkMatcherWrapper(MatcherWrapper):
 
     def __init__(self, matcher, port):
         super().__init__(matcher)
+        self.port = port
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PUB)
         self.socket.bind("tcp://*:%s" % port)
@@ -262,3 +266,74 @@ class NetworkMatcherWrapper(MatcherWrapper):
         self.socket.send(msg, 0)
         print("Send result to web port.")
         return xys1_matched, xys2_matched, confidence, vis_image
+
+
+class FileLoaderWrapper(LoaderWrapper):
+    """Data load by reading from file"""
+
+    def __init__(self, loader, image_train_dir, image_query_dir):
+        super().__init__(loader)
+        self.image_train_dir = image_train_dir
+        self.image_query_dir = image_query_dir
+        # register pillow_heif to read HEIC images
+        register_heif_opener()
+
+    def load(self, image1_name, image2_name):
+        # load from load
+        image1, image2 = self.loader.load(image1_name, image2_name)
+
+        # overwrite with file
+        image1_file = os.path.join(self.image_train_dir, image1_name)
+        image2_file = os.path.join(self.image_query_dir, image2_name)
+
+        if os.path.exists(image1_file):
+            if not image1_name.endswith(".HEIC"):
+                image1 = cv2.imread(image1_file)
+            else:
+                # use pillow_heif to read HEIC images
+                image1_pil = Image.open(image1_file)
+                image1 = cv2.cvtColor(np.array(image1_pil), cv2.COLOR_BGR2RGB)
+        if os.path.exists(image2_file):
+            if not image2_name.endswith(".HEIC"):
+                image2 = cv2.imread(image2_file)
+            else:
+                # use pillow_heif to read HEIC images
+                image2_pil = Image.open(image2_file)
+                image2 = cv2.cvtColor(np.array(image2_pil), cv2.COLOR_BGR2RGB)
+        return image1, image2
+
+
+class NetworkLoaderWrapper(LoaderWrapper):
+    """Data load by reading from web port."""
+
+    def __init__(self, loader, port):
+        super().__init__(loader)
+        self.port = port
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.SUB)
+        self.socket.connect("tcp://localhost:%s" % port)
+        self.socket.setsockopt(zmq.SUBSCRIBE, b"")
+        print("Client started at port %s" % port)
+
+    def load(self, image1_name, image2_name):
+        # load from load
+        image1, image2 = self.loader.load(image1_name, image2_name)
+
+        # overwrite with network if image_path is "network"
+        if image1_name == "network":
+            image1 = self.load_image()
+        if image2_name == "network":
+            image2 = self.load_image()
+        return image1, image2
+
+    def load_image(self):
+        print(f"Image Loader listending to {self.port}")
+        msgs = self.socket.recv_multipart(0)
+        assert len(msgs) == 2, "#msgs={}".format(len(msgs))
+        image_size = np.frombuffer(msgs[0], dtype=np.int32)
+        width = image_size[0]
+        height = image_size[1]
+        print(f"width={width}, height={height}")
+        msg = msgs[1]
+        image = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
+        return image

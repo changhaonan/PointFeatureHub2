@@ -4,6 +4,7 @@
 defaults:
     - detect: sift
     - match: bf
+    - load: base
 
 
 # path to original working directory (that `train.py` was executed from in command line)
@@ -31,8 +32,11 @@ max_width: 600
 # network
 publish_detector: False
 publish_matcher: True
+load_from_network: False
+
 detector_port: 9090
 matcher_port: 8080
+loader_port: 5050
 
 # visualize
 draw_keypoints: False

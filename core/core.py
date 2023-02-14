@@ -26,6 +26,7 @@ class Detector(ABC):
             xys (np.ndarray): keypoints' coordinates and size.
             desc (np.ndarray): descriptors.
             scores (np.ndarray): scores of keypoints.
+            vis_image (np.ndarray): image with keypoints drawn.
         """
         raise NotImplementedError
 
@@ -198,3 +199,53 @@ class MatcherWrapper(Matcher):
     @property
     def unwrapped(self):
         return self.matcher.unwrapped
+
+
+class Loader(ABC):
+    """Abstract class for data loader."""
+
+    # Set this in SOME subclasses
+    metadata = {}
+
+    # Set this in ALL subclasses
+    device = None
+
+    @abc.abstractmethod
+    def load(self, image1_name, image2_name) -> Tuple[np.ndarray, np.ndarray]:
+        """Load image1_name and image2_name.
+        Args:
+            image1_name (str): image1 name to be loaded.
+            image2_name (str): image2 name to be loaded.
+        Returns:
+            image1 (np.ndarray): loaded image1.
+            image2 (np.ndarray): loaded image2.
+        """
+        raise NotImplementedError
+
+    @property
+    def unwrapped(self):
+        """Completely unwrap this env.
+
+        Returns:
+            Loader: The base Loader instance
+        """
+        return self
+    
+
+class LoaderWrapper(Loader):
+    def __init__(self, loader):
+        self.loader = loader
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(
+                "attempted to get missing private attribute '{}'".format(name)
+            )
+        return getattr(self.env, name)
+
+    def load(self, image1_name, image2_name):
+        return self.loader.load(image1_name, image2_name)
+
+    @property
+    def unwrapped(self):
+        return self.loader.unwrapped

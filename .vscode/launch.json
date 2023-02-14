@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "detector",
+            "name": "detector (sp)",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/run.py",
@@ -74,13 +74,13 @@
             "justMyCode": true
         },
         {
-            "name": "matcher [empty, adalam]",
+            "name": "matcher [base, adalam]",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/run.py",
             "args": [
                 "task=match",
-                "detect=empty",
+                "detect=base",
                 "match=adalam",
                 "draw_matches=true"
             ],
@@ -108,7 +108,7 @@
             "program": "${workspaceFolder}/run.py",
             "args": [
                 "task=match",
-                "detect=empty",
+                "detect=base",
                 "match=loftr",
                 "draw_matches=true"
             ],

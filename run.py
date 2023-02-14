@@ -4,8 +4,8 @@ import cv2
 import glob
 import numpy as np
 from PIL import Image
-from pillow_heif import register_heif_opener
-from method import detector_map, matcher_map
+
+from method import detector_map, matcher_map, loader_map
 from core.wrapper import (
     DrawKeyPointsDetectorWrapper,
     SaveImageDetectorWrapper,
@@ -13,6 +13,8 @@ from core.wrapper import (
     DrawKeyPointsMatcherWrapper,
     SaveImageMatcherWrapper,
     NetworkMatcherWrapper,
+    FileLoaderWrapper,
+    NetworkLoaderWrapper,
 )
 
 
@@ -66,8 +68,26 @@ def launch_detector_hydra(cfg):
             matcher = NetworkMatcherWrapper(matcher, cfg.matcher_port)
         return matcher
 
-    # register pillow_heif to read HEIC images
-    register_heif_opener()
+    def create_loader_thunk(**kwargs):
+        if cfg.loader not in loader_map:
+            raise ValueError(
+                "Matcher {} not supported. Supported matchers are: {}".format(
+                    cfg.matcher, loader_map.keys()
+                )
+            )
+        loader = loader_map[cfg.matcher](cfg, **kwargs)
+        if cfg.load_from_network:
+            loader = NetworkMatcherWrapper(loader, cfg.loader_port)
+        else:
+            loader = FileLoaderWrapper(
+                loader,
+                os.path.join(cfg.data_dir, cfg.train_dir),
+                os.path.join(cfg.data_dir, cfg.query_dir),
+            )
+        return loader
+
+    # create loader
+    loader = create_loader_thunk()
 
     if cfg.task == "detect":
         detector = create_detector_thunk()
@@ -77,68 +97,39 @@ def launch_detector_hydra(cfg):
             detector.detect(image)
     elif cfg.task == "match":
         matcher = create_matcher_thunk()
-        if not matcher.detector_free:
-            detector = create_detector_thunk()
-        else:
-            detector = None
+        detector = create_detector_thunk()
 
-        # go over train list
-        image_prev, xys_prev, desc_prev, scores_prev = None, None, None, None
-        for image_train_file in glob.glob(
-            os.path.join(cfg.data_dir, cfg.train_dir, "*")
-        ):
+        for image1_file in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
             # get image name
-            image_name = os.path.basename(image_train_file)
-            image_query_file = os.path.join(cfg.data_dir, cfg.query_dir, image_name)
-
-            if not image_name.endswith(".HEIC"):
-                image_train = cv2.imread(image_train_file)
-                image_query = cv2.imread(image_query_file)
-            else:
-                # use pillow_heif to read HEIC images
-                image_train_pil = Image.open(
-                    image_train_file
-                )  # do whatever need with a Pillow image
-                image_query_pil = Image.open(image_query_file)
-                image_train = cv2.cvtColor(np.array(image_train_pil), cv2.COLOR_BGR2RGB)
-                image_query = cv2.cvtColor(np.array(image_query_pil), cv2.COLOR_BGR2RGB)
+            image_name = os.path.basename(image1_file)
+            image1, image2 = loader.load(image_name, image_name)
 
             # resize image based on max_height and max_width
-            if (
-                image_train.shape[0] > cfg.max_height
-                or image_train.shape[1] > cfg.max_width
-            ):
+            if image1.shape[0] > cfg.max_height or image1.shape[1] > cfg.max_width:
                 scale = min(
-                    cfg.max_height / image_train.shape[0],
-                    cfg.max_width / image_train.shape[1],
+                    cfg.max_height / image1.shape[0],
+                    cfg.max_width / image1.shape[1],
                 )
-                image_train = cv2.resize(image_train, (0, 0), fx=scale, fy=scale)
-            if (
-                image_query.shape[0] > cfg.max_height
-                or image_query.shape[1] > cfg.max_width
-            ):
+                image1 = cv2.resize(image1, (0, 0), fx=scale, fy=scale)
+            if image2.shape[0] > cfg.max_height or image2.shape[1] > cfg.max_width:
                 scale = min(
-                    cfg.max_height / image_query.shape[0],
-                    cfg.max_width / image_query.shape[1],
+                    cfg.max_height / image2.shape[0],
+                    cfg.max_width / image2.shape[1],
                 )
-                image_query = cv2.resize(image_query, (0, 0), fx=scale, fy=scale)
+                image2 = cv2.resize(image2, (0, 0), fx=scale, fy=scale)
 
-            if not matcher.detector_free:
-                xys_train, desc_train, scores_train, _ = detector.detect(image_train)
-                xys_query, desc_query, scores_query, _ = detector.detect(image_query)
-            else:
-                xys_train, desc_train, scores_train = None, None, None
-                xys_query, desc_query, scores_query = None, None, None
+            xys1, desc1, scores1, _ = detector.detect(image1)
+            xys2, desc2, scores2, _ = detector.detect(image2)
 
             matcher.match(
-                image_query,
-                image_train,
-                xys_query,
-                xys_train,
-                desc_query,
-                desc_train,
-                scores_query,
-                scores_train,
+                image1,
+                image2,
+                xys1,
+                xys2,
+                desc1,
+                desc2,
+                scores1,
+                scores2,
             )
 
 
