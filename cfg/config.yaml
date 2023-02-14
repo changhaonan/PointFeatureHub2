@@ -1,0 +1,35 @@
+# @package _global_
+
+# specify here default training configuration
+defaults:
+    - detect: sift
+    - match: bf
+
+
+# path to original working directory (that `train.py` was executed from in command line)
+# hydra hijacks working directory by changing it to the current log directory,
+# so it's useful to have path to original working directory as a special variable
+# read more here: https://hydra.cc/docs/next/tutorials/basic/running_your_app/working_directory
+work_dir: ${hydra:runtime.cwd}
+
+
+# path to folder with data
+data_dir: ${work_dir}/data
+train_dir: image_train
+query_dir: image_query
+
+# pretty print config at the start of the run using Rich library
+print_config: True
+
+# default set
+task: detect
+
+# visualize
+draw_keypoints: False
+draw_matches: False
+save_image: False
+save_path: ${work_dir}/log
+
+hydra:
+    run:
+        dir: ${work_dir}

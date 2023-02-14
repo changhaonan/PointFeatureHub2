@@ -1,0 +1,20 @@
+# @package _global_
+
+detector: r2d2
+
+device: gpu
+dim_feature: 128
+max_feature: 500
+thresh_confid: 0.7
+
+detector_port: 9090  # port where it publish the detection result
+
+# r2d2 related parameters
+model: third_party/r2d2/models/r2d2_WASF_N16.pt
+scale_f: 1.189207115002721  # 2**0.25
+min_size: 256
+max_size: 1024
+min_scale: 0
+max_scale: 1
+reliability_thr: 0.7
+repeatability_thr: 0.7

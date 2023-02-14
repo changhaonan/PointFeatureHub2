@@ -1,0 +1,4 @@
+# @package _global_
+
+matcher: bf
+matcher_port: 8080  # port where it publish the matching result
