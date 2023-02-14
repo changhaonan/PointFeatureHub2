@@ -160,7 +160,7 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
     def vis(self, image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence):
         image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
         image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
-        if np.std(confidence) < 1e-6:
+        if np.std(confidence) < 1.0:
             color_green = np.array([0.0, 1.0, 0.0])[None, :]
             color = np.repeat(color_green, confidence.shape[0], axis=0)
         else:

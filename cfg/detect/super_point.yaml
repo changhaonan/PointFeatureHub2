@@ -2,7 +2,7 @@
 
 detector: super_point
 
-device: gpu
+detector_device: gpu
 dim_feature: 128
 max_feature: 500
 thresh_confid: 0.7

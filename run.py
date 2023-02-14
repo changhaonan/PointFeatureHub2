@@ -20,7 +20,7 @@ def launch_detector_hydra(cfg):
                     cfg.detector, detector_map.keys()
                 )
             )
-        detector = detector_map[cfg.detector](cfg, cfg.device, **kwargs)
+        detector = detector_map[cfg.detector](cfg, cfg.detector_device, **kwargs)
         if cfg.draw_keypoints:
             window_name = f"{cfg.task}:{cfg.detector}"
             detector = DrawKeyPointsDetectorWrapper(detector, window_name=window_name)
@@ -42,7 +42,7 @@ def launch_detector_hydra(cfg):
                     cfg.matcher, matcher_map.keys()
                 )
             )
-        matcher = matcher_map[cfg.matcher](cfg, cfg.device, **kwargs)
+        matcher = matcher_map[cfg.matcher](cfg, cfg.matcher_device, **kwargs)
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
@@ -64,8 +64,12 @@ def launch_detector_hydra(cfg):
             image = cv2.imread(image_file)
             detector.detect(image)
     elif cfg.task == "match":
-        detector = create_detector_thunk()
         matcher = create_matcher_thunk()
+        if not matcher.detector_free:
+            detector = create_detector_thunk()
+        else:
+            detector = None
+        
         # go over train list
         image_prev, xys_prev, desc_prev, scores_prev = None, None, None, None
         for image_train_file in glob.glob(

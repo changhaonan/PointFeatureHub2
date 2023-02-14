@@ -2,7 +2,7 @@
 
 detector: orb
 
-device: cpu
+detector_device: cpu
 dim_feature: 32
 max_feature: 500
 thresh_confid: 0.7

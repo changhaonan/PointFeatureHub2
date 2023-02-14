@@ -2,3 +2,4 @@
 
 matcher: super_glue
 matcher_port: 8080  # port where it publish the matching result
+matcher_device: gpu

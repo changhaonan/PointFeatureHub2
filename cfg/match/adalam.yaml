@@ -1,8 +1,6 @@
 # @package _global_
 
-matcher: loftr
+matcher: adalam
 matcher_port: 8080  # port where it publish the matching result
-matcher_device: gpu
 
-# loftr related parameters
-pretrained: indoor
+matcher_device: gpu

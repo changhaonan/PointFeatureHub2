@@ -30,9 +30,6 @@ def get_matching_keypoints(lafs1, lafs2, idxs):
 class LoFTRMatcher(Matcher):
     def __init__(self, cfg, device="cpu"):
         self.device = device
-        self.dim_feature = cfg.dim_feature
-        self.max_feature = cfg.max_feature
-        self.thresh_confid = cfg.thresh_confid
         # dynamically config the matcher
         self.matcher = KF.LoFTR(pretrained=cfg.pretrained).eval()
         if self.device == "gpu":

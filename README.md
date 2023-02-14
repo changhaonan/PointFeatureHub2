@@ -11,14 +11,14 @@ Currently included:
 - OpenCV-based
     - ORB
     - SIFT
-- Detector-Free
-    - LoFTR from kernia
 
 ## Matching method:
 
 - SuperGLUE
 - OpenCV: BF-matcher
 - AdaLAM from kernia
+- Detector-Free
+    - LoFTR from kernia
 
 ## Architecture
 
