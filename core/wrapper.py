@@ -4,6 +4,7 @@ from core.core import Detector, DetectorWrapper, Matcher, MatcherWrapper
 import numpy as np
 import matplotlib.cm as cm
 from third_party.utils import make_matching_plot_fast
+import zmq
 
 
 class SaveImageDetectorWrapper(DetectorWrapper):
@@ -88,6 +89,31 @@ class DrawKeyPointsDetectorWrapper(DetectorWrapper):
         return vis_image
 
 
+class NetworkDetectorWrapper(DetectorWrapper):
+    """Send result to web port."""
+
+    def __init__(self, detector, port):
+        super().__init__(detector)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind("tcp://*:%s" % port)
+        print("Server started at port %s" % port)
+
+    def detect(self, image):
+        # detect keypoints/descriptors for a single image
+        xys, desc, scores, vis_image = self.detector.detect(image)
+        # send result to web port
+        num_feat, feat_dim = desc.shape
+        msg = np.array([num_feat, feat_dim]).reshape(-1).astype(np.int32).tobytes()
+        self.socket.send(msg, 2)
+        msg = xys.astype(np.float32).reshape(-1).tobytes()
+        self.socket.send(msg, 2)
+        msg = desc.astype(np.float32).reshape(-1).tobytes()
+        self.socket.send(msg, 0)
+        print("Send result to web port.")
+        return xys, desc, scores, vis_image
+
+
 class SaveImageMatcherWrapper(MatcherWrapper):
     """Save detected image to a file"""
 
@@ -164,6 +190,7 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
         image1_gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
         image2_gray = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if np.std(confidence) < 1.0:
+            # if the confidence is similar, use green color
             color_green = np.array([0.0, 1.0, 0.0])[None, :]
             color = np.repeat(color_green, confidence.shape[0], axis=0)
         else:
@@ -207,3 +234,31 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
             cv2.imshow(self.window_name, vis_image)
             cv2.waitKey(0)
         return vis_image
+
+
+class NetworkMatcherWrapper(MatcherWrapper):
+    """Send result to web port."""
+
+    def __init__(self, matcher, port):
+        super().__init__(matcher)
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind("tcp://*:%s" % port)
+        print("Server started at port %s" % port)
+
+    def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
+        xys1_matched, xys2_matched, confidence, vis_image = self.matcher.match(
+            image1, image2, xys1, xys2, desc1, desc2, score1, score2
+        )
+        # send result to web port
+        num_matched = xys1_matched.shape[0]
+        msg = np.array([num_matched]).astype(np.int32).tobytes()
+        self.socket.send(msg, 2)
+        msg = xys1_matched.astype(np.float32).reshape(-1).tobytes()
+        self.socket.send(msg, 2)
+        msg = xys2_matched.astype(np.float32).reshape(-1).tobytes()
+        self.socket.send(msg, 2)
+        msg = confidence.astype(np.float32).reshape(-1).tobytes()
+        self.socket.send(msg, 0)
+        print("Send result to web port.")
+        return xys1_matched, xys2_matched, confidence, vis_image

@@ -9,8 +9,10 @@ from method import detector_map, matcher_map
 from core.wrapper import (
     DrawKeyPointsDetectorWrapper,
     SaveImageDetectorWrapper,
+    NetworkDetectorWrapper,
     DrawKeyPointsMatcherWrapper,
     SaveImageMatcherWrapper,
+    NetworkMatcherWrapper,
 )
 
 
@@ -36,6 +38,8 @@ def launch_detector_hydra(cfg):
                     padding_zeros=cfg.padding_zeros,
                     verbose=cfg.verbose,
                 )
+        if cfg.publish_detector:
+            detector = NetworkDetectorWrapper(detector, cfg.detector_port)
         return detector
 
     def create_matcher_thunk(**kwargs):
@@ -58,6 +62,8 @@ def launch_detector_hydra(cfg):
                     padding_zeros=cfg.padding_zeros,
                     verbose=cfg.verbose,
                 )
+        if cfg.publish_matcher:
+            matcher = NetworkMatcherWrapper(matcher, cfg.matcher_port)
         return matcher
 
     # register pillow_heif to read HEIC images
@@ -75,7 +81,7 @@ def launch_detector_hydra(cfg):
             detector = create_detector_thunk()
         else:
             detector = None
-        
+
         # go over train list
         image_prev, xys_prev, desc_prev, scores_prev = None, None, None, None
         for image_train_file in glob.glob(
@@ -90,17 +96,31 @@ def launch_detector_hydra(cfg):
                 image_query = cv2.imread(image_query_file)
             else:
                 # use pillow_heif to read HEIC images
-                image_train_pil = Image.open(image_train_file)  # do whatever need with a Pillow image
+                image_train_pil = Image.open(
+                    image_train_file
+                )  # do whatever need with a Pillow image
                 image_query_pil = Image.open(image_query_file)
                 image_train = cv2.cvtColor(np.array(image_train_pil), cv2.COLOR_BGR2RGB)
                 image_query = cv2.cvtColor(np.array(image_query_pil), cv2.COLOR_BGR2RGB)
-            
+
             # resize image based on max_height and max_width
-            if image_train.shape[0] > cfg.max_height or image_train.shape[1] > cfg.max_width:
-                scale = min(cfg.max_height / image_train.shape[0], cfg.max_width / image_train.shape[1])
+            if (
+                image_train.shape[0] > cfg.max_height
+                or image_train.shape[1] > cfg.max_width
+            ):
+                scale = min(
+                    cfg.max_height / image_train.shape[0],
+                    cfg.max_width / image_train.shape[1],
+                )
                 image_train = cv2.resize(image_train, (0, 0), fx=scale, fy=scale)
-            if image_query.shape[0] > cfg.max_height or image_query.shape[1] > cfg.max_width:
-                scale = min(cfg.max_height / image_query.shape[0], cfg.max_width / image_query.shape[1])
+            if (
+                image_query.shape[0] > cfg.max_height
+                or image_query.shape[1] > cfg.max_width
+            ):
+                scale = min(
+                    cfg.max_height / image_query.shape[0],
+                    cfg.max_width / image_query.shape[1],
+                )
                 image_query = cv2.resize(image_query, (0, 0), fx=scale, fy=scale)
 
             if not matcher.detector_free:

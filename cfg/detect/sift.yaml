@@ -6,5 +6,3 @@ detector_device: cpu
 dim_feature: 128
 max_feature: 500
 thresh_confid: 0.7
-
-detector_port: 9090  # port where it publish the detection result
