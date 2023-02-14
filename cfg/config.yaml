@@ -24,6 +24,10 @@ print_config: True
 # default set
 task: detect
 
+# image limit
+max_height: 600
+max_width: 600
+
 # visualize
 draw_keypoints: False
 draw_matches: False

@@ -150,11 +150,14 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
         xys1_matched, xys2_matched, confidence, _ = self.matcher.match(
             image1, image2, xys1, xys2, desc1, desc2, score1, score2
         )
+
         if self.detector_free:
             xys1 = xys1_matched
             xys2 = xys2_matched
         # visualize image
-        vis_image = self.vis(image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence)
+        vis_image = self.vis(
+            image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence
+        )
         return xys1_matched, xys2_matched, confidence, vis_image
 
     def vis(self, image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence):
@@ -170,19 +173,35 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
             "Matches: {}".format(len(xys1_matched)),
         ]
 
-        # visualize matches
-        vis_image = make_matching_plot_fast(
-            image1_gray,
-            image2_gray,
-            xys1[:, :2],
-            xys2[:, :2],
-            xys1_matched[:, :2],
-            xys2_matched[:, :2],
-            color,
-            text,
-            path=None,
-            show_keypoints=True,
-        )
+        if xys1_matched.shape[0] == 0:
+            color = np.array([[0.0, 0.0, 0.0]])
+            text = ["No matches found"]
+            vis_image = make_matching_plot_fast(
+                image1_gray,
+                image2_gray,
+                xys1,
+                xys2,
+                xys1_matched,
+                xys2_matched,
+                color,
+                text,
+                path=None,
+                show_keypoints=True,
+            )
+        else:
+            # visualize matches
+            vis_image = make_matching_plot_fast(
+                image1_gray,
+                image2_gray,
+                xys1[:, :2],
+                xys2[:, :2],
+                xys1_matched[:, :2],
+                xys2_matched[:, :2],
+                color,
+                text,
+                path=None,
+                show_keypoints=True,
+            )
 
         if self.show:
             cv2.imshow(self.window_name, vis_image)

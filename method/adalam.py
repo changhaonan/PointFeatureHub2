@@ -71,7 +71,7 @@ class AdalamMatcher(Matcher):
 
         print(f"{idxs.shape[0]} tentative matches with AdaLAM")
         if idxs.shape[0] == 0:  # Early return
-            return
+            return np.array([]), np.array([]), np.array([]), None
 
         # matching
         mkpts1, mkpts2 = get_matching_keypoints(lafs1, lafs2, idxs)
