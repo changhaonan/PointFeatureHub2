@@ -1,5 +1,6 @@
 import zmq
 import numpy as np
+import cv2
 
 
 def use_socket(extract_func):
