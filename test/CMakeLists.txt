@@ -1,0 +1,1 @@
+add_executable(test_detector_client test_detector_client.cpp)
