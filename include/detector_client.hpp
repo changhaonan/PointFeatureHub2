@@ -52,12 +52,14 @@ namespace pfh
         if (image.empty())
         {
             std::cout << "Image is empty" << std::endl;
+            throw std::runtime_error("Image is empty!");
             return;
         }
         // Check if roi is valid
         if (roi(0) < 0 || roi(1) > image.cols || roi(2) < 0 || roi(3) > image.rows)
         {
             std::cout << "ROI is invalid" << std::endl;
+            throw std::runtime_error("ROI is invalid!");
             return;
         }
 

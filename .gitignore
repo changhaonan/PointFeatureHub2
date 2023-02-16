@@ -3,3 +3,4 @@
 .hydra
 data
 build
+*.log
