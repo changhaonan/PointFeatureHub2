@@ -29,6 +29,30 @@
             ]
         },
         {
+            "name": "matcher (client)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/test_matcher_client",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "detector (sp)",
             "type": "python",
             "request": "launch",
@@ -49,8 +73,7 @@
             "args": [
                 "task=match",
                 "detect=super_point",
-                "match=super_glue",
-                "draw_matches=true"
+                "match=super_glue"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

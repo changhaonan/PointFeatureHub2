@@ -310,19 +310,38 @@ class NetworkLoaderWrapper(LoaderWrapper):
 
         # overwrite with network if image_path is "network"
         if image1_name == "network":
-            image1 = self.load_image()
-        if image2_name == "network":
-            image2 = self.load_image()
+            image1, image2_candidate = self.load_image()
+            if image2_name == "network" and image2_candidate.shape[0] > 0:
+                image2 = image2_candidate
         return image1, image2
 
     def load_image(self):
         print(f"Image Loader listending ...")
         msgs = self.socket.recv_multipart(0)
-        assert len(msgs) == 2, "#msgs={}".format(len(msgs))
-        image_size = np.frombuffer(msgs[0], dtype=np.int32)
-        width = image_size[0]
-        height = image_size[1]
-        print(f"width={width}, height={height}")
-        msg = msgs[1]
-        image = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
-        return image
+        if  len(msgs) == 2:
+            # load image
+            image_size = np.frombuffer(msgs[0], dtype=np.int32)
+            width = image_size[0]
+            height = image_size[1]
+            print(f"width={width}, height={height}")
+            msg = msgs[1]
+            image = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
+            return image, np.array([])
+        elif len(msgs) == 4:
+            # load image1
+            image_size = np.frombuffer(msgs[0], dtype=np.int32)
+            width = image_size[0]
+            height = image_size[1]
+            print(f"width={width}, height={height}")
+            msg = msgs[1]
+            image1 = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
+            # load image2
+            image_size = np.frombuffer(msgs[2], dtype=np.int32)
+            width = image_size[0]
+            height = image_size[1]
+            msg = msgs[3]
+            image2 = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
+            return image1, image2
+        else:
+            print(f"Unexpected message: {msgs}")
+            return np.array([]), np.array([])

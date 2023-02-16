@@ -37,7 +37,7 @@ port: 5050
 
 # visualize
 draw_keypoints: False
-draw_matches: False
+draw_matches: True
 save_image: False
 save_path: ${work_dir}/log
 
