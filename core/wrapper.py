@@ -249,12 +249,13 @@ class NetworkMatcherWrapper(MatcherWrapper):
             image1, image2, xys1, xys2, desc1, desc2, score1, score2
         )
         # send result to web socket
+        # only send xy position
         num_matched = xys1_matched.shape[0]
         msg = np.array([num_matched]).astype(np.int32).tobytes()
         self.socket.send(msg, 2)
-        msg = xys1_matched.astype(np.float32).reshape(-1).tobytes()
+        msg = xys1_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
         self.socket.send(msg, 2)
-        msg = xys2_matched.astype(np.float32).reshape(-1).tobytes()
+        msg = xys2_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
         self.socket.send(msg, 2)
         msg = confidence.astype(np.float32).reshape(-1).tobytes()
         self.socket.send(msg, 0)

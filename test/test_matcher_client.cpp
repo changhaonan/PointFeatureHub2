@@ -6,19 +6,23 @@
 int main(int argc, char **argv)
 {
     auto current_path = std::filesystem::current_path();
-    std::vector<std::filesystem::path> image_path_list = {current_path / "data/image_train/0.png", current_path / "data/image_train/1.png"};
+    std::vector<std::filesystem::path> image_path_list = {
+        current_path / "data/image_train/0.png",
+        current_path / "data/image_query/0.png"};
     pfh::MatcherClient matcher_client(5050, 400);
     matcher_client.SetUp();
 
     cv::Mat image1 = cv::imread(image_path_list[0].string());
-    cv::Mat image2 = cv::imread(image_path_list[0].string());
+    cv::Mat image2 = cv::imread(image_path_list[1].string());
     std::vector<cv::KeyPoint> keypoints1;
     std::vector<cv::KeyPoint> keypoints2;
+    keypoints1.clear();
+    keypoints2.clear();
     matcher_client.Match(
         image1, image2,
-        Eigen::Vector4f(0, image1.cols, 0, image1.rows),
-        Eigen::Vector4f(0, image2.cols, 0, image2.rows),
-        0, 90,
+        Eigen::Vector4f(0, image1.cols * 0.5, 0, image1.rows * 0.5),
+        Eigen::Vector4f(0, image2.cols * 0.5, 0, image2.rows * 0.5),
+        0, 10,
         keypoints1, keypoints2);
 
     // Draw matches

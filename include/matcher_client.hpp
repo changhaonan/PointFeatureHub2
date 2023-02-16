@@ -34,7 +34,7 @@ namespace pfh
         zmq::socket_t socket_;
     };
 
-    // #ifdef MATCHER_CLIENT_IMPLEMENTATION
+#ifdef MATCHER_CLIENT_IMPLEMENTATION
     // Implement below
     MatcherClient::MatcherClient(const int port, const int fixed_size)
         : port_(port), fixed_size_(fixed_size), context_(1),
@@ -117,10 +117,6 @@ namespace pfh
         keypoints2.resize(num_match);
         Eigen::Matrix3f backward_transform1 = forward_transform1.inverse();
         Eigen::Matrix3f backward_transform2 = forward_transform2.inverse();
-        std::cout << "backward_transform1: " << std::endl;
-        std::cout << backward_transform1 << std::endl;
-        std::cout << "backward_transform2: " << std::endl;
-        std::cout << backward_transform2 << std::endl;
 
         for (auto i = 0; i < num_match; i++)
         {
@@ -130,7 +126,7 @@ namespace pfh
             keypoints1[i] = kpt1;
 
             Eigen::Vector3f p2(kpts2_array[2 * i], kpts2_array[2 * i + 1], 1);
-            p1 = backward_transform2 * p2;
+            p2 = backward_transform2 * p2;
             cv::KeyPoint kpt2({p2(0), p2(1)}, 1);
             keypoints2[i] = kpt2;
         }
@@ -194,6 +190,6 @@ namespace pfh
         new_transform(1, 1) = H_input / float(side);
         forward_transform = new_transform * forward_transform;
     }
-    // #endif
+#endif
 
 }
