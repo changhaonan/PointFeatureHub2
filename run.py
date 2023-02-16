@@ -2,8 +2,7 @@ import hydra
 import os
 import cv2
 import glob
-import numpy as np
-from PIL import Image
+import zmq
 
 from method import detector_map, matcher_map, loader_map
 from core.wrapper import (
@@ -27,7 +26,7 @@ def launch_detector_hydra(cfg):
                     cfg.detector, detector_map.keys()
                 )
             )
-        detector = detector_map[cfg.detector](cfg, cfg.detector_device, **kwargs)
+        detector = detector_map[cfg.detector](cfg, cfg.detector_device)
         if cfg.draw_keypoints:
             window_name = f"{cfg.task}:{cfg.detector}"
             detector = DrawKeyPointsDetectorWrapper(detector, window_name=window_name)
@@ -40,8 +39,10 @@ def launch_detector_hydra(cfg):
                     padding_zeros=cfg.padding_zeros,
                     verbose=cfg.verbose,
                 )
-        if cfg.publish_detector:
-            detector = NetworkDetectorWrapper(detector, cfg.detector_port)
+        if kwargs["publish_to_network"]:
+            detector = NetworkDetectorWrapper(
+                detector, kwargs["context"], kwargs["socket"]
+            )
         return detector
 
     def create_matcher_thunk(**kwargs):
@@ -51,7 +52,7 @@ def launch_detector_hydra(cfg):
                     cfg.matcher, matcher_map.keys()
                 )
             )
-        matcher = matcher_map[cfg.matcher](cfg, cfg.matcher_device, **kwargs)
+        matcher = matcher_map[cfg.matcher](cfg, cfg.matcher_device)
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
@@ -64,8 +65,10 @@ def launch_detector_hydra(cfg):
                     padding_zeros=cfg.padding_zeros,
                     verbose=cfg.verbose,
                 )
-        if cfg.publish_matcher:
-            matcher = NetworkMatcherWrapper(matcher, cfg.matcher_port)
+        if kwargs["publish_to_network"]:
+            matcher = NetworkMatcherWrapper(
+                matcher, kwargs["context"], kwargs["socket"]
+            )
         return matcher
 
     def create_loader_thunk(**kwargs):
@@ -75,9 +78,9 @@ def launch_detector_hydra(cfg):
                     cfg.matcher, loader_map.keys()
                 )
             )
-        loader = loader_map[cfg.loader](cfg, **kwargs)
+        loader = loader_map[cfg.loader](cfg)
         if cfg.load_from_network:
-            loader = NetworkMatcherWrapper(loader, cfg.loader_port)
+            loader = NetworkLoaderWrapper(loader, kwargs["context"], kwargs["socket"])
         else:
             loader = FileLoaderWrapper(
                 loader,
@@ -87,50 +90,89 @@ def launch_detector_hydra(cfg):
         return loader
 
     # create loader
-    loader = create_loader_thunk()
+    zmq_context = zmq.Context()
+    zmq_socket = zmq_context.socket(zmq.REP)
+    zmq_socket.bind(f"tcp://0.0.0.0:{cfg.port}")
+    loader = create_loader_thunk(context=zmq_context, socket=zmq_socket)
 
     if cfg.task == "detect":
-        detector = create_detector_thunk()
+        publish_to_network = cfg.publish_to_network
+        detector = create_detector_thunk(
+            context=zmq_context,
+            socket=zmq_socket,
+            publish_to_network=publish_to_network,
+        )
         # go over train list
-        for image_file in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*.png")):
-            image = cv2.imread(image_file)
-            detector.detect(image)
+        if not cfg.load_from_network:
+            for image_file in glob.glob(
+                os.path.join(cfg.data_dir, cfg.train_dir, "*.png")
+            ):
+                image = cv2.imread(image_file)
+                detector.detect(image)
+        else:
+            while True:
+                image1, image2 = loader.load("network", "none")
+                detector.detect(image1)
     elif cfg.task == "match":
-        matcher = create_matcher_thunk()
-        detector = create_detector_thunk()
-        
-        for image1_file in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
-            # get image name
-            image_name = os.path.basename(image1_file)
-            image1, image2 = loader.load(image_name, image_name)
+        publish_to_network = cfg.publish_to_network
+        matcher = create_matcher_thunk(
+            context=zmq_context,
+            socket=zmq_socket,
+            publish_to_network=publish_to_network,
+        )
+        detector = create_detector_thunk(
+            context=zmq_context, socket=zmq_socket, publish_to_network=False
+        )
+        if not cfg.load_from_network:
+            for image1_file in glob.glob(
+                os.path.join(cfg.data_dir, cfg.train_dir, "*")
+            ):
+                # get image name
+                image_name = os.path.basename(image1_file)
+                image1, image2 = loader.load(image_name, image_name)
 
-            # resize image based on max_height and max_width
-            if image1.shape[0] > cfg.max_height or image1.shape[1] > cfg.max_width:
-                scale = min(
-                    cfg.max_height / image1.shape[0],
-                    cfg.max_width / image1.shape[1],
+                # resize image based on max_height and max_width
+                if image1.shape[0] > cfg.max_height or image1.shape[1] > cfg.max_width:
+                    scale = min(
+                        cfg.max_height / image1.shape[0],
+                        cfg.max_width / image1.shape[1],
+                    )
+                    image1 = cv2.resize(image1, (0, 0), fx=scale, fy=scale)
+                if image2.shape[0] > cfg.max_height or image2.shape[1] > cfg.max_width:
+                    scale = min(
+                        cfg.max_height / image2.shape[0],
+                        cfg.max_width / image2.shape[1],
+                    )
+                    image2 = cv2.resize(image2, (0, 0), fx=scale, fy=scale)
+
+                xys1, desc1, scores1, _ = detector.detect(image1)
+                xys2, desc2, scores2, _ = detector.detect(image2)
+
+                matcher.match(
+                    image1,
+                    image2,
+                    xys1,
+                    xys2,
+                    desc1,
+                    desc2,
+                    scores1,
+                    scores2,
                 )
-                image1 = cv2.resize(image1, (0, 0), fx=scale, fy=scale)
-            if image2.shape[0] > cfg.max_height or image2.shape[1] > cfg.max_width:
-                scale = min(
-                    cfg.max_height / image2.shape[0],
-                    cfg.max_width / image2.shape[1],
+        else:
+            while True:
+                image1, image2 = loader.load("network", "network")
+                xys1, desc1, scores1, _ = detector.detect(image1)
+                xys2, desc2, scores2, _ = detector.detect(image2)
+                matcher.match(
+                    image1,
+                    image2,
+                    xys1,
+                    xys2,
+                    desc1,
+                    desc2,
+                    scores1,
+                    scores2,
                 )
-                image2 = cv2.resize(image2, (0, 0), fx=scale, fy=scale)
-
-            xys1, desc1, scores1, _ = detector.detect(image1)
-            xys2, desc2, scores2, _ = detector.detect(image2)
-
-            matcher.match(
-                image1,
-                image2,
-                xys1,
-                xys2,
-                desc1,
-                desc2,
-                scores1,
-                scores2,
-            )
 
 
 if __name__ == "__main__":

@@ -30,13 +30,10 @@ max_height: 600
 max_width: 600
 
 # network
-publish_detector: False
-publish_matcher: True
-load_from_network: False
+publish_to_network: True
+load_from_network: True
 
-detector_port: 9090
-matcher_port: 8080
-loader_port: 5050
+port: 5050
 
 # visualize
 draw_keypoints: False

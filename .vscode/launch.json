@@ -5,6 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "detetor (client)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/test_detector_client",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "detector (sp)",
             "type": "python",
             "request": "launch",
@@ -12,7 +36,7 @@
             "args": [
                 "task=detect",
                 "detect=super_point",
-                "draw_keypoints=true"
+                "draw_keypoints=false"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -114,6 +138,7 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
-        }
+        },
+        
     ]
 }
