@@ -28,5 +28,5 @@ We also provide python and C++ wrapper to integrate with your own projects.
 
 ## TODO:
 
-- [ ] Add a resize wrapper for Detector and Matcher.
-- [ ] 
+- [ ] Add python client.
+- [ ] Add CUDA-based data passing support.

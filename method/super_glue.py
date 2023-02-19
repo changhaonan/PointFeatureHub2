@@ -66,4 +66,8 @@ class SuperGlueMatcher(Matcher):
         matched_idx = np.array(matched_idx_list)
         confidence = confidence[valid]
 
+        if len(matched_idx) == 0:
+            print("No matches found!")
+            return np.array([]), np.array([]), np.array([]), None
+
         return xys1[matched_idx[:, 0]], xys2[matched_idx[:, 1]], confidence, None

@@ -33,7 +33,7 @@ max_width: 600
 publish_to_network: True
 load_from_network: True
 
-port: 5050
+port: 9090
 
 # visualize
 draw_keypoints: False

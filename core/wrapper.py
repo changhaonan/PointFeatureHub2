@@ -206,10 +206,10 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
             vis_image = make_matching_plot_fast(
                 image1_gray,
                 image2_gray,
-                xys1,
-                xys2,
-                xys1_matched,
-                xys2_matched,
+                xys1[:, :2],
+                xys2[:, :2],
+                xys1_matched,  # Empty
+                xys2_matched,  # Empty
                 color,
                 text,
                 path=None,
@@ -252,14 +252,19 @@ class NetworkMatcherWrapper(MatcherWrapper):
         # only send xy position
         num_matched = xys1_matched.shape[0]
         msg = np.array([num_matched]).astype(np.int32).tobytes()
-        self.socket.send(msg, 2)
-        msg = xys1_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
-        self.socket.send(msg, 2)
-        msg = xys2_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
-        self.socket.send(msg, 2)
-        msg = confidence.astype(np.float32).reshape(-1).tobytes()
-        self.socket.send(msg, 0)
-        return xys1_matched, xys2_matched, confidence, vis_image
+        if num_matched == 0:
+            # early stop if no matches found
+            self.socket.send(msg, 0)
+            return xys1_matched, xys2_matched, confidence, vis_image
+        else:
+            self.socket.send(msg, 2)
+            msg = xys1_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 2)
+            msg = xys2_matched[:, :2].astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 2)
+            msg = confidence.astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 0)
+            return xys1_matched, xys2_matched, confidence, vis_image
 
 
 class FileLoaderWrapper(LoaderWrapper):
@@ -314,6 +319,11 @@ class NetworkLoaderWrapper(LoaderWrapper):
             image1, image2_candidate = self.load_image()
             if image2_name == "network" and image2_candidate.shape[0] > 0:
                 image2 = image2_candidate
+        
+        # show images
+        cv2.imshow("image1", image1)
+        cv2.imshow("image2", image2)
+        cv2.waitKey(0)
         return image1, image2
 
     def load_image(self):

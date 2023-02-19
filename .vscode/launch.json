@@ -73,7 +73,8 @@
             "args": [
                 "task=match",
                 "detect=super_point",
-                "match=super_glue"
+                "match=super_glue",
+                "draw_matches=true"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
