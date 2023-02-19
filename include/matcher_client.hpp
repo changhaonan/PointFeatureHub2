@@ -59,10 +59,21 @@ namespace pfh
                               std::vector<cv::KeyPoint> &keypoints1,
                               std::vector<cv::KeyPoint> &keypoints2)
     {
+        // Get the first 3 channels of image1, image2
+        cv::Mat image1_3ch, image2_3ch;
+        if (image1.channels() == 4)
+            cv::cvtColor(image1, image1_3ch, cv::COLOR_RGBA2RGB);
+        else
+            image1_3ch = image1;
+        if (image2.channels() == 4)
+            cv::cvtColor(image2, image2_3ch, cv::COLOR_RGBA2RGB);
+        else
+            image2_3ch = image2;
+
         cv::Mat transformed_image1, transformed_image2;
         Eigen::Matrix3f forward_transform1, forward_transform2;
-        TransformImage(image1, roi1, rot_deg1, transformed_image1, forward_transform1);
-        TransformImage(image2, roi2, rot_deg2, transformed_image2, forward_transform2);
+        TransformImage(image1_3ch, roi1, rot_deg1, transformed_image1, forward_transform1);
+        TransformImage(image2_3ch, roi2, rot_deg2, transformed_image2, forward_transform2);
 
         {
             zmq::message_t msg(2 * sizeof(int));
@@ -91,10 +102,10 @@ namespace pfh
             socket_.send(msg, zmq::send_flags::none);
         }
 
-        printf("[detector client]: waiting for reply\n");
+        printf("[matcher client]: waiting for reply\n");
         std::vector<zmq::message_t> recv_msgs;
         auto result = zmq::recv_multipart(socket_, std::back_inserter(recv_msgs));
-        printf("[detector client]: got reply\n");
+        printf("[matcher client]: got reply\n");
 
         std::vector<int> info(2);
         std::memcpy(info.data(), recv_msgs[0].data(), info.size() * sizeof(int));
@@ -103,7 +114,7 @@ namespace pfh
 
         if (num_match == 0)
         {
-            std::cout << "[detector client]: no feature detected." << std::endl;
+            std::cout << "[matcher client]: no feature detected." << std::endl;
             return;
         }
 
@@ -150,6 +161,8 @@ namespace pfh
             throw std::runtime_error("ROI is invalid!");
             return;
         }
+        // Assert the channel
+        assert(image.channels() == 3);
 
         const int W = roi(1) - roi(0);
         const int H = roi(3) - roi(2);
