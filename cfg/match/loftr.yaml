@@ -5,3 +5,4 @@ matcher_device: gpu
 
 # loftr related parameters
 pretrained: indoor
+min_candidate_num: 50  # At least using 20 candidate for pruning outliers.

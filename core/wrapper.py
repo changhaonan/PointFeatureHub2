@@ -203,11 +203,13 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
         if xys1_matched.shape[0] == 0:
             color = np.array([[0.0, 0.0, 0.0]])
             text = ["No matches found"]
+            xys1_ch2 = xys1[:, :2] if xys1.shape[1] > 2 else xys1
+            xys2_ch2 = xys2[:, :2] if xys2.shape[1] > 2 else xys2
             vis_image = make_matching_plot_fast(
                 image1_gray,
                 image2_gray,
-                xys1[:, :2],
-                xys2[:, :2],
+                xys1_ch2,
+                xys2_ch2,
                 xys1_matched,  # Empty
                 xys2_matched,  # Empty
                 color,
