@@ -91,10 +91,10 @@ namespace pfh
             socket_.send(msg, zmq::send_flags::none);
         }
 
-        printf("[detector client]: waiting for reply\n");
+        printf("[matcher client]: waiting for reply\n");
         std::vector<zmq::message_t> recv_msgs;
         auto result = zmq::recv_multipart(socket_, std::back_inserter(recv_msgs));
-        printf("[detector client]: got reply\n");
+        printf("[matcher client]: got reply\n");
 
         std::vector<int> info(2);
         std::memcpy(info.data(), recv_msgs[0].data(), info.size() * sizeof(int));
@@ -103,7 +103,7 @@ namespace pfh
 
         if (num_match == 0)
         {
-            std::cout << "[detector client]: no feature detected." << std::endl;
+            std::cout << "[matcher client]: no feature detected." << std::endl;
             return;
         }
 
