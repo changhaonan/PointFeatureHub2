@@ -320,10 +320,6 @@ class NetworkLoaderWrapper(LoaderWrapper):
             if image2_name == "network" and image2_candidate.shape[0] > 0:
                 image2 = image2_candidate
         
-        # show images
-        cv2.imshow("image1", image1)
-        cv2.imshow("image2", image2)
-        cv2.waitKey(0)
         return image1, image2
 
     def load_image(self):
