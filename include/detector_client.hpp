@@ -62,6 +62,12 @@ namespace pfh
             throw std::runtime_error("ROI is invalid!");
             return;
         }
+        // Get the first 3 channels of image
+        cv::Mat image_3ch;
+        if (image.channels() == 4)
+            cv::cvtColor(image, image_3ch, cv::COLOR_RGBA2RGB);
+        else
+            image_3ch = image;
 
         const int W = roi(1) - roi(0);
         const int H = roi(3) - roi(2);
@@ -75,7 +81,7 @@ namespace pfh
         {
             for (int w = 0; w < W; w++)
             {
-                img.at<cv::Vec3b>(h, w) = image.at<cv::Vec3b>(h + roi(2), w + roi(0));
+                img.at<cv::Vec3b>(h, w) = image_3ch.at<cv::Vec3b>(h + roi(2), w + roi(0));
             }
         }
 
