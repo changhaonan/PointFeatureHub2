@@ -36,7 +36,7 @@ class LoFTRMatcher(Matcher):
             self.matcher = self.matcher.cuda()
         # loftr is detector-free method
         self.detector_free = True
-        self.min_candidate_num = cfg.min_candidate_num
+        self.min_prior_matches = cfg.min_prior_matches
 
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # process image
@@ -54,7 +54,7 @@ class LoFTRMatcher(Matcher):
 
         xys1 = correspondences["keypoints0"].cpu().numpy()
         xys2 = correspondences["keypoints1"].cpu().numpy()
-        if xys1.shape[0] <= self.min_candidate_num or xys2.shape[0] <= self.min_candidate_num:
+        if xys1.shape[0] <= self.min_prior_matches or xys2.shape[0] <= self.min_prior_matches:
             return xys1, xys2, np.array([]), None
         Fm, inliers = cv2.findFundamentalMat(
             xys1, xys2, cv2.USAC_MAGSAC, 0.5, 0.999, 100000

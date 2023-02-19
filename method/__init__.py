@@ -4,6 +4,7 @@ from .r2d2 import R2D2Detector
 from .orb import ORB2Detector
 
 from .bf import BFMatcher
+from .magsac import MAGSACMatcher
 from .super_glue import SuperGlueMatcher
 from .loftr import LoFTRMatcher
 from .adalam import AdalamMatcher
@@ -21,6 +22,7 @@ detector_map = {
 matcher_map = {
     "base": BaseDetector,
     "bf": BFMatcher,
+    "magsac": MAGSACMatcher,
     "super_glue": SuperGlueMatcher,
     "loftr": LoFTRMatcher,
     "adalam": AdalamMatcher,

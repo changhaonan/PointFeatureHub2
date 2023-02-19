@@ -1,0 +1,8 @@
+# @package _global_
+
+matcher: magsac
+
+matcher_device: cpu
+
+# magsac related parameters
+min_prior_matches: 20

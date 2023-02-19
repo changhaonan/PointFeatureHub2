@@ -19,6 +19,7 @@ Currently included:
 - AdaLAM from kernia
 - Detector-Free
     - LoFTR from kernia
+- MAGSAC
 
 ## Architecture
 
