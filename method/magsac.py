@@ -3,6 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from core.core import Matcher
+from core.decorator import report_time
 
 
 class MAGSACMatcher(Matcher):
@@ -20,6 +21,7 @@ class MAGSACMatcher(Matcher):
         else:
             raise NotImplementedError
 
+    @report_time
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # do a match first
         matches = self.matcher.match(desc1, desc2)

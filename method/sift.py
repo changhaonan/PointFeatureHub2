@@ -8,6 +8,7 @@ import sys
 
 sys.path.append("../")
 from core.core import Detector
+from core.decorator import report_time
 
 
 class SIFTDetector(Detector):
@@ -18,6 +19,7 @@ class SIFTDetector(Detector):
         self.thresh_confid = cfg.thresh_confid
         self.sift = cv2.xfeatures2d.SIFT_create()
 
+    @report_time
     def detect(self, image):
         # detect keypoints/descriptors for a single image
         kpts, desc = self.sift.detectAndCompute(image, None)

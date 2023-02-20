@@ -8,7 +8,7 @@ import os
 
 sys.path.append("../")
 from core.core import Detector
-
+from core.decorator import report_time
 from tqdm import tqdm
 from PIL import Image
 import torch
@@ -130,9 +130,7 @@ class R2D2Detector(Detector):
         self.sift = cv2.xfeatures2d.SIFT_create()
 
         self.net = load_network(os.path.join(cfg.work_dir, cfg.model))
-        self.detector = NonMaxSuppression(
-            rel_thr=cfg.reliability_thr, rep_thr=cfg.repeatability_thr
-        )
+        self.detector = NonMaxSuppression(rel_thr=cfg.reliability_thr, rep_thr=cfg.repeatability_thr)
         if not self.device == "cpu":
             self.net = self.net.cuda()
         # parameters
@@ -142,9 +140,10 @@ class R2D2Detector(Detector):
         self.min_size = cfg.min_size
         self.max_size = cfg.max_size
 
+    @report_time
     def detect(self, image):
-       # preprocess image
-        image_tensor = norm_RGB(image)[None] 
+        # preprocess image
+        image_tensor = norm_RGB(image)[None]
         if not self.device == "cpu":
             image_tensor = image_tensor.cuda()
 

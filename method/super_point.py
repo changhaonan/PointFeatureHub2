@@ -6,7 +6,7 @@ import numpy as np
 import sys
 import cv2
 from core.core import Detector
-
+from core.decorator import report_time
 from pathlib import Path
 from tqdm import tqdm
 import matplotlib.cm as cm
@@ -33,6 +33,7 @@ class SuperPointDetector(Detector):
         if self.device == "gpu":
             self.superpoint = self.superpoint.cuda()
 
+    @report_time
     def detect(self, image):
         # preprocess image
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -46,9 +47,7 @@ class SuperPointDetector(Detector):
         xys = result["keypoints"][0].cpu().numpy()
         # append a size channel to xys
         xys = np.concatenate((xys, np.ones((xys.shape[0], 1))), axis=1)
-        desc = (
-            result["descriptors"][0].cpu().numpy().T
-        )  # Transpose to be compatible with ORB
+        desc = result["descriptors"][0].cpu().numpy().T  # Transpose to be compatible with ORB
         scores = result["scores"][0].cpu().numpy()
         idxs = scores.argsort()[-self.max_feature or None :]
 

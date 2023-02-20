@@ -3,6 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from core.core import Matcher
+from core.decorator import report_time
 
 
 class BFMatcher(Matcher):
@@ -14,16 +15,12 @@ class BFMatcher(Matcher):
         # dynamically config the matcher
         if cfg.detector == "orb":
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
-        elif (
-            cfg.detector == "super_point"
-            or cfg.detector == "sift"
-            or cfg.detector == "surf"
-            or cfg.detector == "r2d2"
-        ):
+        elif cfg.detector == "super_point" or cfg.detector == "sift" or cfg.detector == "surf" or cfg.detector == "r2d2":
             self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
         else:
             raise NotImplementedError
 
+    @report_time
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # match two sets of descriptors
         matches = self.matcher.match(desc1, desc2)

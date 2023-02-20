@@ -3,6 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from core.core import Matcher
+from core.decorator import report_time
 import matplotlib.pyplot as plt
 import kornia as K
 import kornia.feature as KF
@@ -21,12 +22,8 @@ def to_torch_image(frame):
 
 
 def get_matching_keypoints(image1, image2, idxs):
-    xys1_matched = (
-        KF.get_laf_center(image1).squeeze()[idxs[:, 0]].detach().cpu().numpy()
-    )
-    xys2_matched = (
-        KF.get_laf_center(image2).squeeze()[idxs[:, 1]].detach().cpu().numpy()
-    )
+    xys1_matched = KF.get_laf_center(image1).squeeze()[idxs[:, 0]].detach().cpu().numpy()
+    xys2_matched = KF.get_laf_center(image2).squeeze()[idxs[:, 1]].detach().cpu().numpy()
     return xys1_matched, xys2_matched
 
 
@@ -39,6 +36,7 @@ class AdalamMatcher(Matcher):
         # self.max_feature = cfg.max_feature
         # self.thresh_confid = cfg.thresh_confid
 
+    @report_time
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # currently we can only use KFNet with adalam
         # TODO: integrate adalam with other detectors
@@ -49,9 +47,7 @@ class AdalamMatcher(Matcher):
         # extract feature
         feature = KF.KeyNetAffNetHardNet(5000, True).eval().cuda()
         input_dict = {
-            "image0": K.color.rgb_to_grayscale(
-                image1_tensor
-            ),  # LofTR works on grayscale images only
+            "image0": K.color.rgb_to_grayscale(image1_tensor),  # LofTR works on grayscale images only
             "image1": K.color.rgb_to_grayscale(image2_tensor),
         }
         hw1 = torch.tensor(image1_tensor.shape[2:])
@@ -75,9 +71,7 @@ class AdalamMatcher(Matcher):
 
         # matching
         mkpts1, mkpts2 = get_matching_keypoints(lafs1, lafs2, idxs)
-        Fm, inliers = cv2.findFundamentalMat(
-            mkpts1, mkpts2, cv2.USAC_MAGSAC, 0.75, 0.999, 100000
-        )
+        Fm, inliers = cv2.findFundamentalMat(mkpts1, mkpts2, cv2.USAC_MAGSAC, 0.75, 0.999, 100000)
         inliers = inliers > 0
         dists = dists.cpu().numpy()
         return (

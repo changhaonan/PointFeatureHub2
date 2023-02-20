@@ -1,14 +1,12 @@
 import cv2
 import numpy as np
-import zmq
-import os
-import tqdm
 import matplotlib.pyplot as plt
 import kornia as K
 import kornia.feature as KF
 import torch
 from kornia_moons.feature import *
 from core.core import Matcher
+from core.decorator import report_time
 
 
 def to_torch_image(frame):
@@ -38,6 +36,7 @@ class LoFTRMatcher(Matcher):
         self.detector_free = True
         self.min_prior_matches = cfg.min_prior_matches
 
+    @report_time
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # process image
         image1_tensor = to_torch_image(image1)
@@ -56,9 +55,7 @@ class LoFTRMatcher(Matcher):
         xys2 = correspondences["keypoints1"].cpu().numpy()
         if xys1.shape[0] <= self.min_prior_matches or xys2.shape[0] <= self.min_prior_matches:
             return xys1, xys2, np.array([]), None
-        Fm, inliers = cv2.findFundamentalMat(
-            xys1, xys2, cv2.USAC_MAGSAC, 0.5, 0.999, 100000
-        )
+        Fm, inliers = cv2.findFundamentalMat(xys1, xys2, cv2.USAC_MAGSAC, 0.5, 0.999, 100000)
         inliers = (inliers > 0).squeeze()
         xys1 = xys1[inliers]
         xys2 = xys2[inliers]

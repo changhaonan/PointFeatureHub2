@@ -8,6 +8,7 @@ import sys
 
 sys.path.append("../")
 from core.core import Detector
+from core.decorator import report_time
 
 
 class ORB2Detector(Detector):
@@ -18,6 +19,7 @@ class ORB2Detector(Detector):
         self.thresh_confid = cfg.thresh_confid
         self.orb = cv2.ORB_create()
 
+    @report_time
     def detect(self, image):
         # detect keypoints/descriptors for a single image
         kpts, desc = self.orb.detectAndCompute(image, None)

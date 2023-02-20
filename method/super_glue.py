@@ -3,6 +3,7 @@ import cv2
 from tqdm import tqdm
 import numpy as np
 from core.core import Matcher
+from core.decorator import report_time
 
 from pathlib import Path
 from tqdm import tqdm
@@ -39,6 +40,7 @@ class SuperGlueMatcher(Matcher):
         else:
             raise NotImplementedError
 
+    @report_time
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         image1_gray = cv2.cvtColor(image1, cv2.COLOR_RGB2GRAY)
         image2_gray = cv2.cvtColor(image2, cv2.COLOR_RGB2GRAY)
