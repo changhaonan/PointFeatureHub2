@@ -160,7 +160,9 @@
                 "task=match",
                 "detect=base",
                 "match=loftr",
-                "draw_matches=true"
+                "draw_matches=true",
+                "publish_to_network=false",
+                "load_from_network=false"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

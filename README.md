@@ -31,3 +31,4 @@ We also provide python and C++ wrapper to integrate with your own projects.
 
 - [ ] Add python client.
 - [ ] Add CUDA-based data passing support.
+- [ ] Add OnePose to this structure.

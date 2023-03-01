@@ -1,0 +1,4 @@
+# @package _global_
+
+matcher: onepose
+matcher_device: gpu
