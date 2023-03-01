@@ -123,7 +123,6 @@ def launch_detector_hydra(cfg):
     elif cfg.task == "match32D":
         publish_to_network = cfg.publish_to_network
         matcher = create_matcher32D_thunk(context=zmq_context, socket=zmq_socket, publish_to_network=publish_to_network)
-        detector = create_detector_thunk(context=zmq_context, socket=zmq_socket, publish_to_network=False)
         if not cfg.load_from_network:
             for scene_path in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
                 # load sparse model
@@ -132,8 +131,7 @@ def launch_detector_hydra(cfg):
                 scene_name = os.path.basename(scene_path)
                 for image_file in glob.glob(os.path.join(cfg.data_dir, cfg.query_dir, scene_name, "*")):
                     image = cv2.imread(image_file)
-                    kpts2d, desc2d, score2d, _ = detector.detect(image)
-                    matcher.match(image, matcher.kpts3d, kpts2d, matcher.desc3d_avg, matcher.desc3d_clt, desc2d, score2d)
+                    matcher.match32d(image)
 
 
 if __name__ == "__main__":

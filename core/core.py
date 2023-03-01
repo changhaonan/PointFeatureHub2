@@ -255,16 +255,10 @@ class Matcher32D(ABC):
     detector_free = False  # whether the matcher is detector-free
 
     @abc.abstractmethod
-    def match(self, image, kpts3d, kpts2d, desc3d_avg, desc3d_clt, desc2d, score2d) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def match32d(self, image) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Match keypoints between 3D keypoints and 2D keypoints.
         Args:
             image (np.ndarray): image to be matched to 3d keypoints.
-            kpts3d (np.ndarray): 3d keypoints.
-            kpts2d (np.ndarray): 2d keypoints.
-            desc3d_avg (np.ndarray): 3d descriptors.
-            desc3d_clt (np.ndarray): 2d descriptors of 3d keypoints.
-            desc2d (np.ndarray): 2d descriptor of 2d keypoints.
-            score2d (np.ndarray): scores of 2d keypoints.
         Returns:
             kpts3d_matched (np.ndarray): matched 3d keypoints.
             kpts2d_matched (np.ndarray): matched 2d keypoints.
@@ -326,8 +320,8 @@ class Matcher32DWrapper(Matcher32D):
     def thresh_confid(self, value):
         self._thresh_confid = value
 
-    def match(self, image, kpts3d, kpts2d, desc3d_avg, desc3d_clt, desc2d, score2d):
-        return self.matcher.match(image, kpts3d, kpts2d, desc3d_avg, desc3d_clt, desc2d, score2d)
+    def match32d(self, image):
+        return self.matcher.match32d(image)
 
     @property
     def detector_free(self):

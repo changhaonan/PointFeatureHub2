@@ -2,3 +2,8 @@
 
 matcher: one_pose
 matcher_device: gpu
+
+# one_pose related parameter
+num_leaf: 8
+match_model_path: ${data_dir}/models/checkpoints/onepose/GATsSPG.ckpt
+extractor_model_path: ${data_dir}/models/extractors/SuperPoint/superpoint_v1.pth
