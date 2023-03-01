@@ -82,6 +82,7 @@ class OnePoseMatcher(Matcher32D):
         self.desc3d_clt = None
         # load matching model
         self.matching_model, self.extractor_model = load_model(cfg)
+        self.sparse_model_path = None
 
     def load_sparse_model(self, model_path):
         avg_data_file = os.path.join(model_path, "anno", "anno_3d_average.npz")
@@ -100,7 +101,10 @@ class OnePoseMatcher(Matcher32D):
         )
 
     @report_time
-    def match32d(self, image, K):
+    def match32d(self, sparse_model_path, image, K):
+        if self.sparse_model_path != sparse_model_path:
+            self.load_sparse_model(sparse_model_path)
+            self.sparse_model_path = sparse_model_path
         # Normalize image:
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
         inp = transforms.ToTensor()(image_gray).cuda()[None]

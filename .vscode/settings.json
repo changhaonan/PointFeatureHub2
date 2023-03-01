@@ -77,6 +77,16 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "bufferobject": "cpp",
+        "image": "cpp",
+        "texture": "cpp",
+        "fast_back_stack": "cpp",
+        "*.ipp": "cpp",
+        "matrixd": "cpp",
+        "matrixf": "cpp",
+        "quat": "cpp",
+        "polytope": "cpp",
+        "specialfunctions": "cpp"
     }
 }

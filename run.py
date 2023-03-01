@@ -58,10 +58,10 @@ def launch_detector_hydra(cfg):
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcher32DWrapper(matcher, window_name=window_name)
-            # if cfg.save_image:
-            #     matcher = SaveImageMatcherWrapper(
-            #         matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
-            #     )
+            if cfg.save_image:
+                matcher = SaveImageMatcherWrapper(
+                    matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+                )
         if kwargs["publish_to_network"]:
             matcher = NetworkMatcher32DWrapper(matcher, kwargs["context"], kwargs["socket"])
         return matcher
@@ -92,7 +92,7 @@ def launch_detector_hydra(cfg):
                 detector.detect(image)
         else:
             while True:
-                image1, image2 = loader.load("network", "none")
+                image1, image2, _ = loader.load("network", "none")
                 detector.detect(image1)
     elif cfg.task == "match":
         publish_to_network = cfg.publish_to_network
@@ -102,7 +102,7 @@ def launch_detector_hydra(cfg):
             for image1_file in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
                 # get image name
                 image_name = os.path.basename(image1_file)
-                image1, image2 = loader.load(image_name, image_name)
+                image1, image2, _ = loader.load(image_name, image_name)
 
                 # resize image based on max_height and max_width
                 if image1.shape[0] > cfg.max_height or image1.shape[1] > cfg.max_width:
@@ -118,7 +118,7 @@ def launch_detector_hydra(cfg):
                 matcher.match(image1, image2, xys1, xys2, desc1, desc2, scores1, scores2)
         else:
             while True:
-                image1, image2 = loader.load("network", "network")
+                image1, image2, _ = loader.load("network", "network")
                 xys1, desc1, scores1, _ = detector.detect(image1)
                 xys2, desc2, scores2, _ = detector.detect(image2)
                 matcher.match(image1, image2, xys1, xys2, desc1, desc2, scores1, scores2)
@@ -127,8 +127,6 @@ def launch_detector_hydra(cfg):
         matcher = create_matcher32D_thunk(context=zmq_context, socket=zmq_socket, publish_to_network=publish_to_network)
         if not cfg.load_from_network:
             for scene_path in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
-                # load sparse model
-                matcher.load_sparse_model(scene_path)
                 # get image name
                 scene_name = os.path.basename(scene_path)
                 # load intrinsics
@@ -138,7 +136,11 @@ def launch_detector_hydra(cfg):
                     if image_file.endswith(".txt"):
                         continue
                     image = cv2.imread(image_file)
-                    matcher.match32d(image, K)
+                    matcher.match32d(scene_path, image, K)
+        else:
+            while True:
+                scene_path, image, K = loader.load("network32d", "network32d")
+                matcher.match32d(scene_path, image, K)
 
 
 if __name__ == "__main__":

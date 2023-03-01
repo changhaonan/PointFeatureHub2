@@ -290,7 +290,7 @@ class FileLoaderWrapper(LoaderWrapper):
                 # use pillow_heif to read HEIC images
                 image2_pil = Image.open(image2_file)
                 image2 = cv2.cvtColor(np.array(image2_pil), cv2.COLOR_BGR2RGB)
-        return image1, image2
+        return image1, image2, None
 
 
 class NetworkLoaderWrapper(LoaderWrapper):
@@ -310,8 +310,10 @@ class NetworkLoaderWrapper(LoaderWrapper):
             image1, image2_candidate = self.load_image()
             if image2_name == "network" and image2_candidate.shape[0] > 0:
                 image2 = image2_candidate
+        elif image1_name == "network32d":
+            return self.load_image32d()
 
-        return image1, image2
+        return image1, image2, None
 
     def load_image(self):
         print(f"Image Loader listending ...")
@@ -344,6 +346,31 @@ class NetworkLoaderWrapper(LoaderWrapper):
             print(f"Unexpected message: {msgs}")
             return np.array([]), np.array([])
 
+    def load_image_and_model(self):
+        print(f"Image Loader listending ...")
+        msgs = self.socket.recv_multipart(0)
+        if len(msgs) == 4:
+            # load image
+            image_size = np.frombuffer(msgs[0], dtype=np.int32)
+            width = image_size[0]
+            height = image_size[1]
+            print(f"width={width}, height={height}")
+            # parse string msg
+            try:
+                sparse_model_path = msgs[1].decode("utf-8")
+            except UnicodeDecodeError:
+                raise ValueError("Invalid string message")
+            # image info
+            msg = msgs[2]
+            image = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
+            # intrinsic matrix
+            msg = msgs[3]
+            K = np.frombuffer(msg, dtype=np.float32).reshape(3, 3)
+            return sparse_model_path, image, K
+        else:
+            print(f"Unexpected message: {msgs}")
+            return "", np.array([]), np.array([])
+
 
 class NetworkMatcher32DWrapper(Matcher32DWrapper):
     """Send result to web socket."""
@@ -353,8 +380,8 @@ class NetworkMatcher32DWrapper(Matcher32DWrapper):
         self.context = context
         self.socket = socket
 
-    def match32d(self, image, K):
-        mkpts3d, mkpts2d, mconf, vis_image = self.matcher.match32d(image, K)
+    def match32d(self, sparse_model_path, image, K):
+        mkpts3d, mkpts2d, mconf, vis_image = self.matcher.match32d(sparse_model_path, image, K)
         # send result to web socket
         # only send xy position
         num_matched = mkpts3d.shape[0]
@@ -383,8 +410,8 @@ class DrawKeyPointsMatcher32DWrapper(Matcher32DWrapper):
         self.vis_height = vis_height
         self.show = show
 
-    def match32d(self, image, K):
-        mkpts3d, mkpts2d, mconf, _ = self.matcher.match32d(image, K)
+    def match32d(self, sparse_model_path, image, K):
+        mkpts3d, mkpts2d, mconf, _ = self.matcher.match32d(sparse_model_path, image, K)
 
         # visualize image
         vis_image = self.vis(image, K, mkpts3d, mkpts2d, mconf)
@@ -449,3 +476,48 @@ class DrawKeyPointsMatcher32DWrapper(Matcher32DWrapper):
             cv2.imshow(self.window_name, vis_image)
             cv2.waitKey(0)
         return vis_image
+
+
+class SaveImageMatcher32DWrapper(Matcher32DWrapper):
+    """Save detected image to a file"""
+
+    def __init__(
+        self,
+        matcher,
+        save_dir: str,
+        prefix: str = "image",
+        suffix: str = "png",
+        padding_zeros: int = 4,
+        verbose: bool = False,
+    ):
+        super(SaveImageMatcher32DWrapper, self).__init__(matcher)
+        self.save_dir = save_dir
+        self.prefix = prefix
+        self.suffix = suffix
+        self.verbose = verbose
+        self.padding_zeros = padding_zeros
+
+        # clean up the save_dir
+        if os.path.exists(self.save_dir):
+            os.system("rm -rf {}".format(self.save_dir))
+        os.makedirs(self.save_dir)
+        # counter for image
+        self.counter = 0
+
+    def match32d(self, sparse_model_path, image, K):
+        # do match
+        mkpts3d, mkpts2d, mconf, vis_image = self.matcher.match32d(sparse_model_path, image, K)
+        # save image
+        self.save(vis_image)
+        return mkpts3d, mkpts2d, mconf, vis_image
+
+    def save(self, image):
+        # save image
+        filename = os.path.join(
+            self.save_dir,
+            "{}_{}.{}".format(self.prefix, str(self.counter).zfill(self.padding_zeros), self.suffix),
+        )
+        cv2.imwrite(filename, image)
+        if self.verbose:
+            print("Save image to {}".format(filename))
+        self.counter += 1

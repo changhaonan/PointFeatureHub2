@@ -20,6 +20,7 @@ Currently included:
 - Detector-Free
     - LoFTR from kernia
 - MAGSAC
+- OnePose (3D to 2D matching)
 
 ## Architecture
 
@@ -32,3 +33,5 @@ We also provide python and C++ wrapper to integrate with your own projects.
 - [ ] Add python client.
 - [ ] Add CUDA-based data passing support.
 - [ ] Add OnePose to this structure.
+    - [ ] Add OnePose method
+    - [ ] Add network client & wrapper

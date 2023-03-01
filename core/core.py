@@ -203,14 +203,13 @@ class Loader(ABC):
     device = None
 
     @abc.abstractmethod
-    def load(self, image1_name, image2_name) -> Tuple[np.ndarray, np.ndarray]:
+    def load(self, image1_name, image2_name):
         """Load image1_name and image2_name.
         Args:
             image1_name (str): image1 name to be loaded.
             image2_name (str): image2 name to be loaded.
         Returns:
-            image1 (np.ndarray): loaded image1.
-            image2 (np.ndarray): loaded image2.
+            Dependent on the loader.
         """
         raise NotImplementedError
 
@@ -263,9 +262,10 @@ class Matcher32D(ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def match32d(self, image, K) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def match32d(self, sparse_model_path, image, K) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Match keypoints between 3D keypoints and 2D keypoints.
         Args:
+            sparse_model_path (str): path to the sparse model.
             image (np.ndarray): image to be matched to 3d keypoints.
             K (np.ndarray): camera intrinsic matrix.
         Returns:
@@ -297,8 +297,8 @@ class Matcher32DWrapper(Matcher32D):
     def load_sparse_model(self, model_path):
         return self.matcher.load_sparse_model(model_path)
 
-    def match32d(self, image, K):
-        return self.matcher.match32d(image, K)
+    def match32d(self, sparse_model_path, image, K):
+        return self.matcher.match32d(sparse_model_path, image, K)
 
     @property
     def unwrapped(self):
