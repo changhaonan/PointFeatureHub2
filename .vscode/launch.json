@@ -167,6 +167,24 @@
             "console": "integratedTerminal",
             "justMyCode": true
         },
+        {
+            "name": "matcher [one_pose]",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.py",
+            "args": [
+                "task=match32D",
+                "detect=super_point",
+                "match=one_pose",
+                "draw_matches=false",
+                "publish_to_network=false",
+                "load_from_network=false",
+                "train_dir=3d_train",
+                "query_dir=2d_query"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
         
     ]
 }

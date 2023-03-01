@@ -9,6 +9,8 @@ from .super_glue import SuperGlueMatcher
 from .loftr import LoFTRMatcher
 from .adalam import AdalamMatcher
 
+from .one_pose import OnePoseMatcher
+
 from .base import BaseDetector, BaseDetector, BaseLoder
 
 detector_map = {
@@ -26,6 +28,10 @@ matcher_map = {
     "super_glue": SuperGlueMatcher,
     "loftr": LoFTRMatcher,
     "adalam": AdalamMatcher,
+}
+
+matcher32D_map = {
+    "one_pose": OnePoseMatcher,
 }
 
 loader_map = {

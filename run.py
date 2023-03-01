@@ -4,7 +4,7 @@ import cv2
 import glob
 import zmq
 
-from method import detector_map, matcher_map, loader_map
+from method import detector_map, matcher_map, loader_map, matcher32D_map
 from core.wrapper import (
     DrawKeyPointsDetectorWrapper,
     SaveImageDetectorWrapper,
@@ -38,6 +38,21 @@ def launch_detector_hydra(cfg):
         if cfg.matcher not in matcher_map:
             raise ValueError("Matcher {} not supported. Supported matchers are: {}".format(cfg.matcher, matcher_map.keys()))
         matcher = matcher_map[cfg.matcher](cfg, cfg.matcher_device)
+        if cfg.draw_matches:
+            window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
+            matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
+            if cfg.save_image:
+                matcher = SaveImageMatcherWrapper(
+                    matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+                )
+        if kwargs["publish_to_network"]:
+            matcher = NetworkMatcherWrapper(matcher, kwargs["context"], kwargs["socket"])
+        return matcher
+
+    def create_matcher32D_thunk(**kwargs):
+        if cfg.matcher not in matcher32D_map:
+            raise ValueError("Matcher {} not supported. Supported matchers are: {}".format(cfg.matcher, matcher_map.keys()))
+        matcher = matcher32D_map[cfg.matcher](cfg, cfg.matcher_device)
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
@@ -105,6 +120,20 @@ def launch_detector_hydra(cfg):
                 xys1, desc1, scores1, _ = detector.detect(image1)
                 xys2, desc2, scores2, _ = detector.detect(image2)
                 matcher.match(image1, image2, xys1, xys2, desc1, desc2, scores1, scores2)
+    elif cfg.task == "match32D":
+        publish_to_network = cfg.publish_to_network
+        matcher = create_matcher32D_thunk(context=zmq_context, socket=zmq_socket, publish_to_network=publish_to_network)
+        detector = create_detector_thunk(context=zmq_context, socket=zmq_socket, publish_to_network=False)
+        if not cfg.load_from_network:
+            for scene_path in glob.glob(os.path.join(cfg.data_dir, cfg.train_dir, "*")):
+                # load sparse model
+                matcher.load_sparse_model(scene_path)
+                # get image name
+                scene_name = os.path.basename(scene_path)
+                for image_file in glob.glob(os.path.join(cfg.data_dir, cfg.query_dir, scene_name, "*")):
+                    image = cv2.imread(image_file)
+                    kpts2d, desc2d, score2d, _ = detector.detect(image)
+                    matcher.match(image, matcher.kpts3d, kpts2d, matcher.desc3d_avg, matcher.desc3d_clt, desc2d, score2d)
 
 
 if __name__ == "__main__":
