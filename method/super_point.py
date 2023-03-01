@@ -52,5 +52,5 @@ class SuperPointDetector(Detector):
         idxs = scores.argsort()[-self.max_feature or None :]
 
         if len(idxs) == 0:
-            return np.zeros((0, 2)), np.zeros((0, 32)), np.zeros((0,))
+            return np.zeros((0, 2)), np.zeros((0, 32)), np.zeros((0,)), image
         return xys[idxs], desc[idxs], scores[idxs], image
