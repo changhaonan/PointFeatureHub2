@@ -53,6 +53,30 @@
             ]
         },
         {
+            "name": "matcher32d (client)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test/test_matcher32d_client",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "detector (sp)",
             "type": "python",
             "request": "launch",
@@ -177,8 +201,8 @@
                 "detect=super_point",
                 "match=one_pose",
                 "draw_matches=true",
-                "publish_to_network=false",
-                "load_from_network=false",
+                "publish_to_network=true",
+                "load_from_network=true",
                 "train_dir=3d_train",
                 "query_dir=2d_query"
             ],

@@ -296,10 +296,11 @@ class FileLoaderWrapper(LoaderWrapper):
 class NetworkLoaderWrapper(LoaderWrapper):
     """Data load by reading from web socket."""
 
-    def __init__(self, loader, context, socket):
+    def __init__(self, loader, context, socket, port):
         super().__init__(loader)
         self.context = context
         self.socket = socket
+        self.port = port
 
     def load(self, image1_name, image2_name):
         # load from load
@@ -311,12 +312,12 @@ class NetworkLoaderWrapper(LoaderWrapper):
             if image2_name == "network" and image2_candidate.shape[0] > 0:
                 image2 = image2_candidate
         elif image1_name == "network32d":
-            return self.load_image32d()
+            return self.load_image_and_model()
 
         return image1, image2, None
 
     def load_image(self):
-        print(f"Image Loader listending ...")
+        print(f"Image Loader listending to {self.port}...")
         msgs = self.socket.recv_multipart(0)
         if len(msgs) == 2:
             # load image
@@ -347,7 +348,7 @@ class NetworkLoaderWrapper(LoaderWrapper):
             return np.array([]), np.array([])
 
     def load_image_and_model(self):
-        print(f"Image Loader listending ...")
+        print(f"Image Loader listending to {self.port}...")
         msgs = self.socket.recv_multipart(0)
         if len(msgs) == 4:
             # load image
@@ -365,7 +366,7 @@ class NetworkLoaderWrapper(LoaderWrapper):
             image = np.frombuffer(msg, dtype=np.uint8).reshape(height, width, -1).squeeze()
             # intrinsic matrix
             msg = msgs[3]
-            K = np.frombuffer(msg, dtype=np.float32).reshape(3, 3)
+            K = np.frombuffer(msg, dtype=np.float32).reshape(3, 3).T  # difference between colmaj and rowmaj
             return sparse_model_path, image, K
         else:
             print(f"Unexpected message: {msgs}")

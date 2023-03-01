@@ -8,9 +8,9 @@ int main(int argc, char **argv)
 {
     auto current_path = std::filesystem::current_path();
     std::vector<std::filesystem::path> image_path_list = {
-        current_path / "data/2d_query/0001/6.png",
-        current_path / "data/2d_query/0001/379.png"};
-    pfh::Matcher32DClient matcher_client(5050, 400);
+        current_path / "data/2d_query/001/6.png",
+        current_path / "data/2d_query/001/379.png"};
+    pfh::Matcher32DClient matcher_client(9090, 400);
     matcher_client.SetUp();
 
     std::string sparse_model_path = (current_path / "data/3d_train/001").string();

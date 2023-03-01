@@ -71,7 +71,7 @@ def launch_detector_hydra(cfg):
             raise ValueError("Matcher {} not supported. Supported matchers are: {}".format(cfg.matcher, loader_map.keys()))
         loader = loader_map[cfg.loader](cfg)
         if cfg.load_from_network:
-            loader = NetworkLoaderWrapper(loader, kwargs["context"], kwargs["socket"])
+            loader = NetworkLoaderWrapper(loader, kwargs["context"], kwargs["socket"], cfg.port)
         else:
             loader = FileLoaderWrapper(loader, os.path.join(cfg.data_dir, cfg.train_dir), os.path.join(cfg.data_dir, cfg.query_dir))
         return loader

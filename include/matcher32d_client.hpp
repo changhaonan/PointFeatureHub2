@@ -37,7 +37,7 @@ namespace pfh
         zmq::socket_t socket_;
     };
 
-    // #ifdef MATCHER32D_CLIENT_IMPLEMENTATION
+#ifdef MATCHER32D_CLIENT_IMPLEMENTATION
     // Implement below
     Matcher32DClient::Matcher32DClient(const int port, const int fixed_size)
         : port_(port), fixed_size_(fixed_size), context_(1),
@@ -194,6 +194,6 @@ namespace pfh
         new_transform(1, 1) = H_input / float(side);
         forward_transform = new_transform * forward_transform;
     }
-    // #endif
+#endif
 
 }
