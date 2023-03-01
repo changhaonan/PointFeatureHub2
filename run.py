@@ -3,7 +3,7 @@ import os
 import cv2
 import glob
 import zmq
-
+import numpy as np
 from method import detector_map, matcher_map, loader_map, matcher32D_map
 from core.wrapper import (
     DrawKeyPointsDetectorWrapper,
@@ -14,6 +14,8 @@ from core.wrapper import (
     NetworkMatcherWrapper,
     FileLoaderWrapper,
     NetworkLoaderWrapper,
+    NetworkMatcher32DWrapper,
+    DrawKeyPointsMatcher32DWrapper,
 )
 
 
@@ -55,13 +57,13 @@ def launch_detector_hydra(cfg):
         matcher = matcher32D_map[cfg.matcher](cfg, cfg.matcher_device)
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
-            matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
-            if cfg.save_image:
-                matcher = SaveImageMatcherWrapper(
-                    matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
-                )
+            matcher = DrawKeyPointsMatcher32DWrapper(matcher, window_name=window_name)
+            # if cfg.save_image:
+            #     matcher = SaveImageMatcherWrapper(
+            #         matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+            #     )
         if kwargs["publish_to_network"]:
-            matcher = NetworkMatcherWrapper(matcher, kwargs["context"], kwargs["socket"])
+            matcher = NetworkMatcher32DWrapper(matcher, kwargs["context"], kwargs["socket"])
         return matcher
 
     def create_loader_thunk(**kwargs):
@@ -129,9 +131,14 @@ def launch_detector_hydra(cfg):
                 matcher.load_sparse_model(scene_path)
                 # get image name
                 scene_name = os.path.basename(scene_path)
-                for image_file in glob.glob(os.path.join(cfg.data_dir, cfg.query_dir, scene_name, "*")):
+                # load intrinsics
+                query_dir = os.path.join(cfg.data_dir, cfg.query_dir, scene_name)
+                K = np.loadtxt(os.path.join(query_dir, "intrinsics.txt"))
+                for image_file in glob.glob(os.path.join(query_dir, "*")):
+                    if image_file.endswith(".txt"):
+                        continue
                     image = cv2.imread(image_file)
-                    matcher.match32d(image)
+                    matcher.match32d(image, K)
 
 
 if __name__ == "__main__":

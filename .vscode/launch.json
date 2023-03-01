@@ -176,7 +176,7 @@
                 "task=match32D",
                 "detect=super_point",
                 "match=one_pose",
-                "draw_matches=false",
+                "draw_matches=true",
                 "publish_to_network=false",
                 "load_from_network=false",
                 "train_dir=3d_train",

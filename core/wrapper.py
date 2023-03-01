@@ -1,10 +1,11 @@
 import cv2
 import os
-from core.core import DetectorWrapper, MatcherWrapper, LoaderWrapper
+from core.core import DetectorWrapper, MatcherWrapper, Matcher32DWrapper, LoaderWrapper
 
 import numpy as np
 import matplotlib.cm as cm
 from third_party.utils import make_matching_plot_fast
+from one_pose.utils import eval_utils, vis_utils
 import zmq
 from pillow_heif import register_heif_opener
 from PIL import Image
@@ -47,9 +48,7 @@ class SaveImageDetectorWrapper(DetectorWrapper):
         # save image
         filename = os.path.join(
             self.save_dir,
-            "{}_{}.{}".format(
-                self.prefix, str(self.counter).zfill(self.padding_zeros), self.suffix
-            ),
+            "{}_{}.{}".format(self.prefix, str(self.counter).zfill(self.padding_zeros), self.suffix),
         )
         cv2.imwrite(filename, image)
         if self.verbose:
@@ -142,9 +141,7 @@ class SaveImageMatcherWrapper(MatcherWrapper):
 
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
         # do match
-        xys1_matched, xys2_matched, confidence, vis_image = self.matcher.match(
-            image1, image2, xys1, xys2, desc1, desc2, score1, score2
-        )
+        xys1_matched, xys2_matched, confidence, vis_image = self.matcher.match(image1, image2, xys1, xys2, desc1, desc2, score1, score2)
         # save image
         self.save(vis_image)
         return xys1_matched, xys2_matched, confidence, vis_image
@@ -153,9 +150,7 @@ class SaveImageMatcherWrapper(MatcherWrapper):
         # save image
         filename = os.path.join(
             self.save_dir,
-            "{}_{}.{}".format(
-                self.prefix, str(self.counter).zfill(self.padding_zeros), self.suffix
-            ),
+            "{}_{}.{}".format(self.prefix, str(self.counter).zfill(self.padding_zeros), self.suffix),
         )
         cv2.imwrite(filename, image)
         if self.verbose:
@@ -173,17 +168,13 @@ class DrawKeyPointsMatcherWrapper(MatcherWrapper):
         self.show = show
 
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
-        xys1_matched, xys2_matched, confidence, _ = self.matcher.match(
-            image1, image2, xys1, xys2, desc1, desc2, score1, score2
-        )
+        xys1_matched, xys2_matched, confidence, _ = self.matcher.match(image1, image2, xys1, xys2, desc1, desc2, score1, score2)
 
         if self.detector_free:
             xys1 = xys1_matched
             xys2 = xys2_matched
         # visualize image
-        vis_image = self.vis(
-            image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence
-        )
+        vis_image = self.vis(image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence)
         return xys1_matched, xys2_matched, confidence, vis_image
 
     def vis(self, image1, image2, xys1, xys2, xys1_matched, xys2_matched, confidence):
@@ -247,9 +238,7 @@ class NetworkMatcherWrapper(MatcherWrapper):
         self.socket = socket
 
     def match(self, image1, image2, xys1, xys2, desc1, desc2, score1, score2):
-        xys1_matched, xys2_matched, confidence, vis_image = self.matcher.match(
-            image1, image2, xys1, xys2, desc1, desc2, score1, score2
-        )
+        xys1_matched, xys2_matched, confidence, vis_image = self.matcher.match(image1, image2, xys1, xys2, desc1, desc2, score1, score2)
         # send result to web socket
         # only send xy position
         num_matched = xys1_matched.shape[0]
@@ -321,13 +310,13 @@ class NetworkLoaderWrapper(LoaderWrapper):
             image1, image2_candidate = self.load_image()
             if image2_name == "network" and image2_candidate.shape[0] > 0:
                 image2 = image2_candidate
-        
+
         return image1, image2
 
     def load_image(self):
         print(f"Image Loader listending ...")
         msgs = self.socket.recv_multipart(0)
-        if  len(msgs) == 2:
+        if len(msgs) == 2:
             # load image
             image_size = np.frombuffer(msgs[0], dtype=np.int32)
             width = image_size[0]
@@ -354,3 +343,109 @@ class NetworkLoaderWrapper(LoaderWrapper):
         else:
             print(f"Unexpected message: {msgs}")
             return np.array([]), np.array([])
+
+
+class NetworkMatcher32DWrapper(Matcher32DWrapper):
+    """Send result to web socket."""
+
+    def __init__(self, matcher, context, socket):
+        super().__init__(matcher)
+        self.context = context
+        self.socket = socket
+
+    def match32d(self, image, K):
+        mkpts3d, mkpts2d, mconf, vis_image = self.matcher.match32d(image, K)
+        # send result to web socket
+        # only send xy position
+        num_matched = mkpts3d.shape[0]
+        msg = np.array([num_matched]).astype(np.int32).tobytes()
+        if num_matched == 0:
+            # early stop if no matches found
+            self.socket.send(msg, 0)
+            return mkpts3d, mkpts2d, mconf, vis_image
+        else:
+            self.socket.send(msg, 2)
+            msg = mkpts3d[:, :2].astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 2)
+            msg = mkpts2d[:, :2].astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 2)
+            msg = mconf.astype(np.float32).reshape(-1).tobytes()
+            self.socket.send(msg, 0)
+            return mkpts3d, mkpts2d, mconf, vis_image
+
+
+class DrawKeyPointsMatcher32DWrapper(Matcher32DWrapper):
+    """Draw keypoints & matching lines on image and visualize it"""
+
+    def __init__(self, matcher, window_name: str = "image", vis_height=500, show=True):
+        super(DrawKeyPointsMatcher32DWrapper, self).__init__(matcher)
+        self.window_name = window_name
+        self.vis_height = vis_height
+        self.show = show
+
+    def match32d(self, image, K):
+        mkpts3d, mkpts2d, mconf, _ = self.matcher.match32d(image, K)
+
+        # visualize image
+        vis_image = self.vis(image, K, mkpts3d, mkpts2d, mconf)
+        return mkpts3d, mkpts2d, mconf, vis_image
+
+    def vis(self, image, K, mkpts3d, mkpts2d, mconf):
+        # solve PNP
+        pose_pred, pose_pred_homo, inliers = eval_utils.ransac_PnP(K, mkpts2d, mkpts3d, scale=1000)
+        vis_image = image
+
+        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        mkpts3d_proj = vis_utils.reproj(K, pose_pred_homo, mkpts3d)
+
+        # get the inliers
+        inliers = np.array(inliers).squeeze()
+        xys1_matched = mkpts3d_proj[inliers, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj[inliers]
+        xys2_matched = mkpts2d[inliers, :2] if mkpts2d.shape[1] > 2 else mkpts2d[inliers]
+
+        if np.std(mconf) < 1.0:
+            # if the confidence is similar, use green color
+            color_green = np.array([0.0, 1.0, 0.0])[None, :]
+            color = np.repeat(color_green, mconf.shape[0], axis=0)
+        else:
+            color = cm.hot(mconf)
+        text = [
+            "Keypoints: {}:{}".format(len(mkpts3d_proj), len(mkpts2d)),
+            "Matches: {}".format(len(xys1_matched)),
+        ]
+
+        if xys1_matched.shape[0] == 0:
+            color = np.array([[0.0, 0.0, 0.0]])
+            text = ["No matches found"]
+            xys1_ch2 = mkpts3d_proj[:, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj
+            xys2_ch2 = mkpts2d[:, :2] if mkpts2d.shape[1] > 2 else mkpts2d
+            vis_image = make_matching_plot_fast(
+                image_gray,
+                image_gray,
+                xys1_ch2,
+                xys2_ch2,
+                xys1_matched,  # Empty
+                xys2_matched,  # Empty
+                color,
+                text,
+                path=None,
+                show_keypoints=True,
+            )
+        else:
+            # visualize matches
+            vis_image = make_matching_plot_fast(
+                image_gray,
+                image_gray,
+                mkpts3d_proj[:, :2],
+                mkpts2d[:, :2],
+                xys1_matched[:, :2],
+                xys2_matched[:, :2],
+                color,
+                text,
+                path=None,
+                show_keypoints=True,
+            )
+        if self.show:
+            cv2.imshow(self.window_name, vis_image)
+            cv2.waitKey(0)
+        return vis_image

@@ -255,10 +255,19 @@ class Matcher32D(ABC):
     detector_free = False  # whether the matcher is detector-free
 
     @abc.abstractmethod
-    def match32d(self, image) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def load_sparse_model(self, model_path):
+        """Load sparse model from model_path.
+        Args:
+            model_path (str): path to the sparse model.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def match32d(self, image, K) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Match keypoints between 3D keypoints and 2D keypoints.
         Args:
             image (np.ndarray): image to be matched to 3d keypoints.
+            K (np.ndarray): camera intrinsic matrix.
         Returns:
             kpts3d_matched (np.ndarray): matched 3d keypoints.
             kpts2d_matched (np.ndarray): matched 2d keypoints.
@@ -285,51 +294,11 @@ class Matcher32DWrapper(Matcher32D):
         self._max_feature = None
         self._thresh_confid = None
 
-    def __getattr__(self, name):
-        if name.startswith("_"):
-            raise AttributeError("attempted to get missing private attribute '{}'".format(name))
-        return getattr(self.env, name)
+    def load_sparse_model(self, model_path):
+        return self.matcher.load_sparse_model(model_path)
 
-    @property
-    def dim_feature(self):
-        if self._dim_feature is None:
-            return self.matcher.dim_feature
-        return self._dim_feature
-
-    @dim_feature.setter
-    def dim_feature(self, value):
-        self._dim_feature = value
-
-    @property
-    def max_feature(self):
-        if self._max_feature is None:
-            return self.matcher.max_feature
-        return self._max_feature
-
-    @max_feature.setter
-    def max_feature(self, value):
-        self._max_feature = value
-
-    @property
-    def thresh_confid(self):
-        if self._thresh_confid is None:
-            return self.matcher.thresh_confid
-        return self._thresh_confid
-
-    @thresh_confid.setter
-    def thresh_confid(self, value):
-        self._thresh_confid = value
-
-    def match32d(self, image):
-        return self.matcher.match32d(image)
-
-    @property
-    def detector_free(self):
-        return self.matcher.detector_free
-
-    @detector_free.setter
-    def detector_free(self, value):
-        self.matcher.detector_free = value
+    def match32d(self, image, K):
+        return self.matcher.match32d(image, K)
 
     @property
     def unwrapped(self):

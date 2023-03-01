@@ -100,7 +100,7 @@ class OnePoseMatcher(Matcher32D):
         )
 
     @report_time
-    def match32d(self, image):
+    def match32d(self, image, K):
         # Normalize image:
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
         inp = transforms.ToTensor()(image_gray).cuda()[None]
