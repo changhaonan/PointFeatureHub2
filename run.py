@@ -28,10 +28,10 @@ def launch_detector_hydra(cfg):
         if cfg.draw_keypoints:
             window_name = f"{cfg.task}:{cfg.detector}"
             detector = DrawKeyPointsDetectorWrapper(detector, window_name=window_name)
-            if cfg.save_image:
-                detector = SaveImageDetectorWrapper(
-                    detector, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
-                )
+        if cfg.save_image:
+            detector = SaveImageDetectorWrapper(
+                detector, cfg.save_path, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+            )
         if kwargs["publish_to_network"]:
             detector = NetworkDetectorWrapper(detector, kwargs["context"], kwargs["socket"])
         return detector
@@ -43,10 +43,10 @@ def launch_detector_hydra(cfg):
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcherWrapper(matcher, window_name=window_name)
-            if cfg.save_image:
-                matcher = SaveImageMatcherWrapper(
-                    matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
-                )
+        if cfg.save_image:
+            matcher = SaveImageMatcherWrapper(
+                matcher, cfg.save_path, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+            )
         if kwargs["publish_to_network"]:
             matcher = NetworkMatcherWrapper(matcher, kwargs["context"], kwargs["socket"])
         return matcher
@@ -58,10 +58,10 @@ def launch_detector_hydra(cfg):
         if cfg.draw_matches:
             window_name = f"{cfg.task}:{cfg.detector}+{cfg.matcher}"
             matcher = DrawKeyPointsMatcher32DWrapper(matcher, window_name=window_name)
-            if cfg.save_image:
-                matcher = SaveImageMatcherWrapper(
-                    matcher, cfg.save_dir, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
-                )
+        if cfg.save_image:
+            matcher = SaveImageMatcherWrapper(
+                matcher, cfg.save_path, prefix=cfg.prefix, suffix=cfg.suffix, padding_zeros=cfg.padding_zeros, verbose=cfg.verbose
+            )
         if kwargs["publish_to_network"]:
             matcher = NetworkMatcher32DWrapper(matcher, kwargs["context"], kwargs["socket"])
         return matcher

@@ -40,6 +40,10 @@ draw_keypoints: False
 draw_matches: False
 save_image: False
 save_path: ${work_dir}/log
+prefix: "frame"
+suffix: "png"
+padding_zeros: 0
+verbose: True
 
 hydra:
     run:
