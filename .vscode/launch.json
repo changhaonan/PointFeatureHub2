@@ -84,7 +84,7 @@
             "args": [
                 "task=detect",
                 "detect=super_point",
-                "draw_keypoints=false"
+                "draw_keypoints=true"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -100,7 +100,9 @@
                 "match=super_glue",
                 "draw_matches=true",
                 "publish_to_network=false",
-                "load_from_network=false"
+                "load_from_network=false",
+                "train_dir=test_train",
+                "query_dir=test_query",
             ],
             "console": "integratedTerminal",
             "justMyCode": true
@@ -114,7 +116,11 @@
                 "task=match",
                 "detect=super_point",
                 "match=bf",
-                "draw_matches=true"
+                "draw_matches=true",
+                "publish_to_network=false",
+                "load_from_network=false",
+                "train_dir=test_train",
+                "query_dir=test_query",
             ],
             "console": "integratedTerminal",
             "justMyCode": true

@@ -106,7 +106,7 @@ class NetworkDetectorWrapper(DetectorWrapper):
         num_feat, feat_dim = desc.shape
         msg = np.array([num_feat, feat_dim]).reshape(-1).astype(np.int32).tobytes()
         self.socket.send(msg, 2)
-        msg = xys.astype(np.float32).reshape(-1).tobytes()
+        msg = xys[:, :2].astype(np.float32).reshape(-1).tobytes()
         self.socket.send(msg, 2)
         msg = desc.astype(np.float32).reshape(-1).tobytes()
         self.socket.send(msg, 0)
