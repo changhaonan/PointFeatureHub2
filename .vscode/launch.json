@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "matcher [sift, sp]",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/run.py",
+            "args": [
+                "task=match",
+                "detect=sift",
+                "match=super_glue",
+                "draw_matches=true"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "detetor (client)",
             "type": "cppdbg",
             "request": "launch",
@@ -209,6 +223,5 @@
             "console": "integratedTerminal",
             "justMyCode": true
         }
-        
     ]
 }

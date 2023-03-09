@@ -37,6 +37,26 @@ class SuperGlueMatcher(Matcher):
             if self.device == "gpu":
                 self.device_str = "cuda"
                 self.matching = self.matching.cuda()
+
+        elif cfg.detector == "sift":
+            sp_config = {
+                # 'superpoint': {
+                #     'nms_radius': cfg.nms_radius,
+                #     'keypoint_threshold': cfg.keypoint_threshold,
+                #     'max_keypoints': cfg.max_keypoints
+                # },
+                'superglue': {
+                    'weights': 'sift',
+                    'sinkhorn_iterations': cfg.sinkhorn_iterations,
+                    'match_threshold': cfg.match_threshold,
+                    'descriptor_dim': 128,
+                    'keypoint_encoder': [32, 64, 128]
+                }
+            }
+            self.matching = Matching(sp_config).eval()
+            if self.device == "gpu":
+                self.device_str = "cuda"
+                self.matching = self.matching.cuda()
         else:
             raise NotImplementedError
 

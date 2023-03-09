@@ -6,12 +6,13 @@ import hydra
 from tqdm import tqdm
 import os.path as osp
 import numpy as np
-
+import sys
+sys.path.append("../")
 from PIL import Image
 from loguru import logger
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
-from one_pose.utils import data_utils, path_utils, eval_utils, vis_utils
+from third_party.one_pose.utils import data_utils, path_utils, eval_utils, vis_utils
 
 from pytorch_lightning import seed_everything
 

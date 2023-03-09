@@ -5,7 +5,7 @@ from core.core import DetectorWrapper, MatcherWrapper, Matcher32DWrapper, Loader
 import numpy as np
 import matplotlib.cm as cm
 from third_party.utils import make_matching_plot_fast
-from one_pose.utils import eval_utils, vis_utils
+from third_party.one_pose.utils import eval_utils, vis_utils
 import zmq
 from pillow_heif import register_heif_opener
 from PIL import Image

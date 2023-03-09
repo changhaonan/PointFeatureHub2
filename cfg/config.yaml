@@ -30,8 +30,8 @@ max_height: 600
 max_width: 600
 
 # network
-publish_to_network: True
-load_from_network: True
+publish_to_network: False
+load_from_network: False
 
 port: 9090
 

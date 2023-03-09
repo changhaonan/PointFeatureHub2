@@ -2,3 +2,5 @@
 
 matcher: super_glue
 matcher_device: gpu
+sinkhorn_iterations: 20
+match_threshold: 0.2
