@@ -15,6 +15,7 @@ work_dir: ${hydra:runtime.cwd}
 
 
 # path to folder with data
+model_dir: ${work_dir}/models
 data_dir: ${work_dir}/data
 train_dir: image_train
 query_dir: image_query
