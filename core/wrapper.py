@@ -5,7 +5,7 @@ from core.core import DetectorWrapper, MatcherWrapper, Matcher32DWrapper, Loader
 import numpy as np
 import matplotlib.cm as cm
 from third_party.utils import make_matching_plot_fast
-from one_pose.utils import eval_utils, vis_utils
+# from one_pose.utils import eval_utils, vis_utils
 import zmq
 from pillow_heif import register_heif_opener
 from PIL import Image
@@ -418,65 +418,65 @@ class DrawKeyPointsMatcher32DWrapper(Matcher32DWrapper):
         vis_image = self.vis(image, K, mkpts3d, mkpts2d, mconf)
         return mkpts3d, mkpts2d, mconf, vis_image
 
-    def vis(self, image, K, mkpts3d, mkpts2d, mconf):
+    # def vis(self, image, K, mkpts3d, mkpts2d, mconf):
         # solve PNP
-        pose_pred, pose_pred_homo, inliers = eval_utils.ransac_PnP(K, mkpts2d, mkpts3d, scale=1000)
-        vis_image = image
+        # pose_pred, pose_pred_homo, inliers = eval_utils.ransac_PnP(K, mkpts2d, mkpts3d, scale=1000)
+        # vis_image = image
 
-        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        mkpts3d_proj = vis_utils.reproj(K, pose_pred_homo, mkpts3d)
+        # image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # mkpts3d_proj = vis_utils.reproj(K, pose_pred_homo, mkpts3d)
 
-        # get the inliers
-        inliers = np.array(inliers).squeeze()
-        xys1_matched = mkpts3d_proj[inliers, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj[inliers]
-        xys2_matched = mkpts2d[inliers, :2] if mkpts2d.shape[1] > 2 else mkpts2d[inliers]
+        # # get the inliers
+        # inliers = np.array(inliers).squeeze()
+        # xys1_matched = mkpts3d_proj[inliers, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj[inliers]
+        # xys2_matched = mkpts2d[inliers, :2] if mkpts2d.shape[1] > 2 else mkpts2d[inliers]
 
-        if np.std(mconf) < 1.0:
-            # if the confidence is similar, use green color
-            color_green = np.array([0.0, 1.0, 0.0])[None, :]
-            color = np.repeat(color_green, mconf.shape[0], axis=0)
-        else:
-            color = cm.hot(mconf)
-        text = [
-            "Keypoints: {}:{}".format(len(mkpts3d_proj), len(mkpts2d)),
-            "Matches: {}".format(len(xys1_matched)),
-        ]
+        # if np.std(mconf) < 1.0:
+        #     # if the confidence is similar, use green color
+        #     color_green = np.array([0.0, 1.0, 0.0])[None, :]
+        #     color = np.repeat(color_green, mconf.shape[0], axis=0)
+        # else:
+        #     color = cm.hot(mconf)
+        # text = [
+        #     "Keypoints: {}:{}".format(len(mkpts3d_proj), len(mkpts2d)),
+        #     "Matches: {}".format(len(xys1_matched)),
+        # ]
 
-        if xys1_matched.shape[0] == 0:
-            color = np.array([[0.0, 0.0, 0.0]])
-            text = ["No matches found"]
-            xys1_ch2 = mkpts3d_proj[:, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj
-            xys2_ch2 = mkpts2d[:, :2] if mkpts2d.shape[1] > 2 else mkpts2d
-            vis_image = make_matching_plot_fast(
-                image_gray,
-                image_gray,
-                xys1_ch2,
-                xys2_ch2,
-                xys1_matched,  # Empty
-                xys2_matched,  # Empty
-                color,
-                text,
-                path=None,
-                show_keypoints=True,
-            )
-        else:
-            # visualize matches
-            vis_image = make_matching_plot_fast(
-                image_gray,
-                image_gray,
-                mkpts3d_proj[:, :2],
-                mkpts2d[:, :2],
-                xys1_matched[:, :2],
-                xys2_matched[:, :2],
-                color,
-                text,
-                path=None,
-                show_keypoints=True,
-            )
-        if self.show:
-            cv2.imshow(self.window_name, vis_image)
-            cv2.waitKey(0)
-        return vis_image
+        # if xys1_matched.shape[0] == 0:
+        #     color = np.array([[0.0, 0.0, 0.0]])
+        #     text = ["No matches found"]
+        #     xys1_ch2 = mkpts3d_proj[:, :2] if mkpts3d_proj.shape[1] > 2 else mkpts3d_proj
+        #     xys2_ch2 = mkpts2d[:, :2] if mkpts2d.shape[1] > 2 else mkpts2d
+        #     vis_image = make_matching_plot_fast(
+        #         image_gray,
+        #         image_gray,
+        #         xys1_ch2,
+        #         xys2_ch2,
+        #         xys1_matched,  # Empty
+        #         xys2_matched,  # Empty
+        #         color,
+        #         text,
+        #         path=None,
+        #         show_keypoints=True,
+        #     )
+        # else:
+        #     # visualize matches
+        #     vis_image = make_matching_plot_fast(
+        #         image_gray,
+        #         image_gray,
+        #         mkpts3d_proj[:, :2],
+        #         mkpts2d[:, :2],
+        #         xys1_matched[:, :2],
+        #         xys2_matched[:, :2],
+        #         color,
+        #         text,
+        #         path=None,
+        #         show_keypoints=True,
+        #     )
+        # if self.show:
+        #     cv2.imshow(self.window_name, vis_image)
+        #     cv2.waitKey(0)
+        # return vis_image
 
 
 class SaveImageMatcher32DWrapper(Matcher32DWrapper):
